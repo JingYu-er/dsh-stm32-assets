@@ -1,13 +1,59 @@
 {
   "name": "dsh-stm32-assets",
+  "version": "2026.10.30-1",
+  "schema": 2,
   "generatedBy": "scripts/build-assets.mjs",
-  "plugin": "D:\\JingYu\\Desktop\\c8t6_vscode_test\\demo\\dsh-stm32",
-  "cubeMx": "D:/app/STM32CubeMX",
+  "profiles": {
+    "core": [
+      "device/**",
+      "ioc/**",
+      "ld/**"
+    ],
+    "full": [
+      "device/**",
+      "ioc/**",
+      "ld/**",
+      "chipdb/**",
+      "diagrams/**"
+    ]
+  },
   "counts": {
+    "device": 3,
     "ioc": 12,
     "ld": 12,
     "chipdb": 58,
     "diagrams": 4
+  },
+  "device": {
+    "chips": {
+      "path": "device/f1/chips.json",
+      "count": 12,
+      "source": "dsh-stm32 resolveF1Chip + resolveHalChip"
+    },
+    "memory": {
+      "path": "device/f1/memory.json",
+      "count": 12,
+      "source": "ld/f1 的 MEMORY 段"
+    },
+    "svd": {
+      "path": "device/f1/svd-f1.json",
+      "kind": "st-svd",
+      "counts": {
+        "peripherals": 53,
+        "registers": 722,
+        "fields": 4833
+      },
+      "source": {
+        "kind": "st-svd",
+        "repo": "cmsis-svd/cmsis-svd-data",
+        "commit": "c65f8551e57c770344d229dcaa0bf838fa29aff4",
+        "path": "data/STMicro/STM32F103xx.svd",
+        "url": "https://raw.githubusercontent.com/cmsis-svd/cmsis-svd-data/c65f8551e57c770344d229dcaa0bf838fa29aff4/data/STMicro/STM32F103xx.svd",
+        "device": "STM32F103xx",
+        "version": "1.3",
+        "license": "STMicroelectronics End User License Agreement v1.0（cmsis-svd-data 的 data/STMicro/License.html）"
+      }
+    }
   },
   "skipped": [
     "STM32F100CET6：RAM 大小未收录：STM32F100E（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100E 的 RAM 再建",
@@ -18,517 +64,624 @@
       "path": "chipdb/f1/STM32F100C(4-6)Tx.xml",
       "bytes": 12342,
       "sha256": "bf3c7c4748b251c5458699da80efd76af44c72fdd7dafb2866b1eca64d0bf5a7",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100C(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100C(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100C(8-B)Tx.xml",
       "bytes": 13253,
       "sha256": "06755f74729194437805bcfe321e25d6abc07cfc3e122ecb42620abef6453e3b",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100C(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100C(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100R(4-6)Hx.xml",
       "bytes": 14678,
       "sha256": "4fa16519c7b4c7372a28fb3556e173eec4eb6f753293d1ecb5658f131502e21d",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100R(4-6)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F100R(4-6)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100R(4-6)Tx.xml",
       "bytes": 14786,
       "sha256": "61e1247292db58a9f1828dd8060b8b0b2fd801bb9e29aa30a44827fd11f6de39",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100R(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100R(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100R(8-B)Hx.xml",
       "bytes": 15697,
       "sha256": "65991b914a3c20385e6db892d676971eeb4121a892235a337c8c1b4fa5858364",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100R(8-B)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F100R(8-B)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100R(8-B)Tx.xml",
       "bytes": 15805,
       "sha256": "08dab6b870c595a16292fc87926d0b3ec34071df7f6746ff0cb0b7014f3c242b",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100R(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100R(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100R(C-D-E)Tx.xml",
       "bytes": 17236,
       "sha256": "7918f8e61e04e55f04c829b01789c8b5bb37598f9224354c7614e23d62897ec3",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100R(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100R(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100V(8-B)Tx.xml",
       "bytes": 21362,
       "sha256": "04398bc26c5daf1e93d9bc1500daaff4eff951b72f82a536c87248414f80087e",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100V(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100V(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100V(C-D-E)Tx.xml",
       "bytes": 24574,
       "sha256": "a9a4961e86d7ec9171004daeb7981d93e74326bce1b1fc06ef5f9170241e20a0",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100V(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100V(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F100Z(C-D-E)Tx.xml",
       "bytes": 30177,
       "sha256": "aa51cd6505660b327478dea4bc57949bc66d4c42e0a5ce51affec505eaa92938",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F100Z(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F100Z(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101C(4-6)Tx.xml",
       "bytes": 10343,
       "sha256": "d63570e74e2546b96a219bbd99d3ea0591c81b02909186a37b1f813b2f33a4a3",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101C(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101C(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101C(8-B)Tx.xml",
       "bytes": 11510,
       "sha256": "8b55ba84871e2b6d24a341ca8f5245412d441d3a987252b41e159f258bb511da",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101C(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101C(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101C(8-B)Ux.xml",
       "bytes": 11512,
       "sha256": "d989c3d4e2d9caba9c4f8d116a94c8bc98d5d6b00e82682e6db97400fad2c715",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101C(8-B)Ux.xml"
+      "source": "CubeMX db/mcu/STM32F101C(8-B)Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101R(4-6)Tx.xml",
       "bytes": 12751,
       "sha256": "b5704c31838161b8408da0d742a00904852816c9c9a45e5a1a34044c5b2f97e9",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101R(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101R(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101R(8-B)Tx.xml",
       "bytes": 14026,
       "sha256": "6e21b077f3e9b1e8c093f05cde7866480d33e67f9f2e5f4613297ee0fc435c3d",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101R(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101R(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101R(C-D-E)Tx.xml",
       "bytes": 15430,
       "sha256": "137520cb4246d5abea7480ce3d44dcdd0ac04c477e5f9193ae82ed4400cc4f41",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101R(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101R(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101R(F-G)Tx.xml",
       "bytes": 15857,
       "sha256": "456a08d67335945071870f062c7f54b8f6b438125380114332534b17fb0c18d4",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101R(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101R(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101RBHx.xml",
       "bytes": 13872,
       "sha256": "421b4c0c59534f7baca2ef80122405eb30bc13a4637d552cd20bf957d125afb9",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101RBHx.xml"
+      "source": "CubeMX db/mcu/STM32F101RBHx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101T(4-6)Ux.xml",
       "bytes": 8377,
       "sha256": "30cbc891bb9e8444b04ae4a70c14483cb974772fb6a1c7e181585ee34c1c8f05",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101T(4-6)Ux.xml"
+      "source": "CubeMX db/mcu/STM32F101T(4-6)Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101T(8-B)Ux.xml",
       "bytes": 8719,
       "sha256": "5156256daccb413640d9483b6c088d02b9f35a399fbafeef5a23fbb8a847f947",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101T(8-B)Ux.xml"
+      "source": "CubeMX db/mcu/STM32F101T(8-B)Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101V(8-B)Tx.xml",
       "bytes": 19192,
       "sha256": "b43ba4de376b8032641b37a6bc6c59b415d21dd4682a13fedfa19bc2fd71e430",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101V(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101V(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101V(C-D-E)Tx.xml",
       "bytes": 22556,
       "sha256": "d6e0180de5a75e4da2e190554cf8a62f8250d0d5ee15ac4496bcd7e7a97087a2",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101V(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101V(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101V(F-G)Tx.xml",
       "bytes": 23053,
       "sha256": "8b039965d267f56ff897870103e9339d8a0c190ff16c2f44f24c20b612182d98",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101V(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101V(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101Z(C-D-E)Tx.xml",
       "bytes": 28553,
       "sha256": "0e627b517a45ce4011f21d33b2c52a46cedf1c70d763d77e299567e8de6b0e28",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101Z(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101Z(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F101Z(F-G)Tx.xml",
       "bytes": 29194,
       "sha256": "3f2be91a4a1780bc1cd1c0d00bfa7ce948e10d910113d30267fa5a73d1ac82e0",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F101Z(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F101Z(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F102C(4-6)Tx.xml",
       "bytes": 10585,
       "sha256": "243b5755fb320eafc4f017656a7b0c523ac65b8795b62a59b29863e81d5d87be",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F102C(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F102C(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F102C(8-B)Tx.xml",
       "bytes": 11751,
       "sha256": "ac173e5a6d30bd9b9f042ea4b57d1f0aebb23b81c6e12d9fe0f1cdabe1fc11b4",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F102C(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F102C(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F102R(4-6)Tx.xml",
       "bytes": 12993,
       "sha256": "7a5f871914ad5e1b3f6bd4aff620ab428117a4f87f163ed282cc94fabc362c58",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F102R(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F102R(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F102R(8-B)Tx.xml",
       "bytes": 14267,
       "sha256": "c07840d3c827e7db99b626e1bb88c297fcaa95bc96bac56c23ceb1551f9cbd9b",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F102R(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F102R(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103C(4-6)Tx.xml",
       "bytes": 12036,
       "sha256": "189900f6b4419449e921bf2dd2b208292ea73a2beafe8cba89912e2c2846ff8a",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103C(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103C(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103C(8-B)Tx.xml",
       "bytes": 13183,
       "sha256": "cceb8815f7d2f4f8264a348a4686518f2d37b2bd8de91b9caff9650a8f210a75",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103C(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103C(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103C6Ux.xml",
       "bytes": 11993,
       "sha256": "59005919c28b864807876f1ef6f3ca004192b35bae8d77cd930657049f63231f",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103C6Ux.xml"
+      "source": "CubeMX db/mcu/STM32F103C6Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103CBUx.xml",
       "bytes": 13158,
       "sha256": "006a14fb1d24666e579aaf794d370a277ec5c4206a7041e4b752abd38f5b7112",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103CBUx.xml"
+      "source": "CubeMX db/mcu/STM32F103CBUx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(4-6)Hx.xml",
       "bytes": 14554,
       "sha256": "cb0928f5a02c61b79dd869b54e6d5eaa22c5a90ea50cf3add1d3f30d8fe19418",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(4-6)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(4-6)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(4-6)Tx.xml",
       "bytes": 14698,
       "sha256": "7ba0bd5845eb7d1639b43230eb2c6fccfa926f121e1d13fcd12924e93fbcff6a",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(4-6)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(4-6)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(8-B)Hx.xml",
       "bytes": 15809,
       "sha256": "2aad5cf1cfe4fe47c727042d5303f3a2ad45c2528d2d9873ea9fc3460e16e23e",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(8-B)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(8-B)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(8-B)Tx.xml",
       "bytes": 15953,
       "sha256": "57c4e6ce02db6b629ef8b9def564bb1cc980f0d6c90d50af54b9e99882563489",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(C-D-E)Tx.xml",
       "bytes": 19144,
       "sha256": "f7ceb5115181ec57b0e80137e8582ea7c26187bdbfb3e3aa3218f97ceb13dbe6",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(C-D-E)Yx.xml",
       "bytes": 18964,
       "sha256": "c3729f9e40975c98664a52556c9f8aa318902a5b134dc6d2ebe97d8ccf09ae9b",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(C-D-E)Yx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(C-D-E)Yx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103R(F-G)Tx.xml",
       "bytes": 19571,
       "sha256": "dafe5547f00082cab3b78865200663152516c500e0522a4307dc1751a4dfb4b1",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103R(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103R(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103T(4-6)Ux.xml",
       "bytes": 9746,
       "sha256": "a7af3e522ed2b644982f4ef540fc86a03a7db9145e0854c5fa7cadae78cf0ad1",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103T(4-6)Ux.xml"
+      "source": "CubeMX db/mcu/STM32F103T(4-6)Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103T(8-B)Ux.xml",
       "bytes": 10068,
       "sha256": "df22fedb10c1f0b820df9012fe5dac15e5a0a6ae4ba93d9613c23fcc2157027d",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103T(8-B)Ux.xml"
+      "source": "CubeMX db/mcu/STM32F103T(8-B)Ux.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103V(8-B)Hx.xml",
       "bytes": 21674,
       "sha256": "b06b8fb514d97ea0f6f20abfe3677e6882e340cb80a8afa5e58f5c440a9a2440",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103V(8-B)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103V(8-B)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103V(8-B)Tx.xml",
       "bytes": 21655,
       "sha256": "180e96bd50f9cce884b705dad92578370476c3eb50377e42eeb492c4eee7035b",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103V(8-B)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103V(8-B)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103V(C-D-E)Hx.xml",
       "bytes": 26826,
       "sha256": "cd5188a6c7382f6089b1aa7886d7a824fd80e208bd8de3fb7f55ce4b83d85ba9",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103V(C-D-E)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103V(C-D-E)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103V(C-D-E)Tx.xml",
       "bytes": 26807,
       "sha256": "0c3845a30a91e9380bfd2cfcce0904da4830b1c7668703e4802046ea137ad374",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103V(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103V(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103V(F-G)Tx.xml",
       "bytes": 27304,
       "sha256": "5e13bd88683924732f95a4f606215b01fdbd3306b0e7aa2fd7514e565ce231e7",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103V(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103V(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103VBIx.xml",
       "bytes": 21672,
       "sha256": "d9a9c5c2b356ad16d8b565117e1a98182d117f607370e73a68ccb723191dbf81",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103VBIx.xml"
+      "source": "CubeMX db/mcu/STM32F103VBIx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103Z(C-D-E)Hx.xml",
       "bytes": 33132,
       "sha256": "59b17905eecff21ca756aaa3e256cbb169a61d4ffd6acfc58a069337a3589824",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103Z(C-D-E)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103Z(C-D-E)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103Z(C-D-E)Tx.xml",
       "bytes": 33131,
       "sha256": "4ac9c9ed76b344914b3167be4ff56baf2d453539398c42c1ba066a0cbfd174ab",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103Z(C-D-E)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103Z(C-D-E)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103Z(F-G)Hx.xml",
       "bytes": 33773,
       "sha256": "fe811984ed12210806e8d75c3ebffeb8644ac622a2a26d80eb1a382099f9c4a0",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103Z(F-G)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F103Z(F-G)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F103Z(F-G)Tx.xml",
       "bytes": 33772,
       "sha256": "2fcc46d8546619417624a2e91c42e281635226cea3fc48da2781b780efc6ca1d",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F103Z(F-G)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F103Z(F-G)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F105R(8-B-C)Tx.xml",
       "bytes": 18315,
       "sha256": "a218c30b4fd08ccbcaeec1b2a7eb5e9e4b098c12f04ab81cb14af042a541e672",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F105R(8-B-C)Tx.xml"
-    },
-    {
-      "path": "chipdb/f1/STM32F105V(8-B-C)Tx.xml",
-      "bytes": 24092,
-      "sha256": "7cf36fc0a8f2ccb84c7b03dece3b329887911c78c2cdc7bfc053fcaef26aefa1",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F105V(8-B-C)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F105R(8-B-C)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F105V(8-B)Hx.xml",
       "bytes": 24085,
       "sha256": "d9c5223e2f5bae05d1f5c7fb9dbcf40a13bfcfcaebc1aff14e6cdd6eea020cfd",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F105V(8-B)Hx.xml"
+      "source": "CubeMX db/mcu/STM32F105V(8-B)Hx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
+    },
+    {
+      "path": "chipdb/f1/STM32F105V(8-B-C)Tx.xml",
+      "bytes": 24092,
+      "sha256": "7cf36fc0a8f2ccb84c7b03dece3b329887911c78c2cdc7bfc053fcaef26aefa1",
+      "source": "CubeMX db/mcu/STM32F105V(8-B-C)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F107R(B-C)Tx.xml",
       "bytes": 19063,
       "sha256": "3a89702f1a86fab40293257fb4255a3151e2d21a27d5604dc97d2d48b5271951",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F107R(B-C)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F107R(B-C)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F107V(B-C)Tx.xml",
       "bytes": 25053,
       "sha256": "be6c6c96b0328345f3b71768b342bc3742edb780abc9c25a5f0035a09c11518a",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F107V(B-C)Tx.xml"
+      "source": "CubeMX db/mcu/STM32F107V(B-C)Tx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
     },
     {
       "path": "chipdb/f1/STM32F107VCHx.xml",
       "bytes": 25044,
       "sha256": "84a160d078fc503e059ba1a2ebe03a1dc45ff3108c1d48a5a5d60c456359d202",
-      "source": "CubeMX D:/app/STM32CubeMX/db/mcu/STM32F107VCHx.xml"
+      "source": "CubeMX db/mcu/STM32F107VCHx.xml（ST 官方 MCU 数据库，随 CubeMX 分发）",
+      "profile": "full"
+    },
+    {
+      "path": "device/f1/chips.json",
+      "bytes": 6114,
+      "sha256": "995e38d89574ccbbac23d7ba31e15065e819a9b3c94a84c4c952f0fd1a0e87cb",
+      "source": "dsh-stm32 resolveF1Chip + resolveHalChip（12 个代表型号）",
+      "profile": "core"
+    },
+    {
+      "path": "device/f1/memory.json",
+      "bytes": 4888,
+      "sha256": "704d5ccd30f5c0f01b7c1fd254b3a7e1f378bf48717a34a70c6d5c4c14106d61",
+      "source": "ld/f1 的 MEMORY 段（渲染后解析）",
+      "profile": "core"
+    },
+    {
+      "path": "device/f1/svd-f1.json",
+      "bytes": 319787,
+      "sha256": "9a9683e6147ae8a85e3068af2295d583e2bbbf605f278c02322487fb0f5397ac",
+      "source": "ST 官方 SVD → 精简事实表（见文件内 source 字段）",
+      "profile": "full"
     },
     {
       "path": "diagrams/dsh-stm32-architecture.html",
       "bytes": 786868,
       "sha256": "1fbf6e0920b3a5c33accad773550463be7ffbb5af6192ca99246ebdc22a6a169",
-      "source": "dsh-stm32 docs/diagrams/dsh-stm32-architecture.html"
+      "source": "dsh-stm32 docs/diagrams/dsh-stm32-architecture.html",
+      "profile": "full"
     },
     {
       "path": "diagrams/dsh-stm32-architecture.png",
       "bytes": 313489,
       "sha256": "9d91a97a3d78bb5309dd35b4a8fa3acf1b7e623921546602fea079d92c29fcac",
-      "source": "dsh-stm32 docs/diagrams/dsh-stm32-architecture.png"
+      "source": "dsh-stm32 docs/diagrams/dsh-stm32-architecture.png",
+      "profile": "full"
     },
     {
       "path": "diagrams/dsh-stm32-journey.html",
       "bytes": 770615,
       "sha256": "c737261d34c9f2fded888dbc0657b61b19cd3c195c008bccf652882073a13ce4",
-      "source": "dsh-stm32 docs/diagrams/dsh-stm32-journey.html"
+      "source": "dsh-stm32 docs/diagrams/dsh-stm32-journey.html",
+      "profile": "full"
     },
     {
       "path": "diagrams/dsh-stm32-journey.png",
       "bytes": 215506,
       "sha256": "6c70d716162ccfeae08e9031a443454467669cf92a1fbd5282265261cbf6fc47",
-      "source": "dsh-stm32 docs/diagrams/dsh-stm32-journey.png"
+      "source": "dsh-stm32 docs/diagrams/dsh-stm32-journey.png",
+      "profile": "full"
     },
     {
       "path": "ioc/minimal/STM32F100C8Tx.ioc",
       "bytes": 4084,
       "sha256": "6e320e1ae5e7b758b903adc4ca2c29ba4e74ff645eddfed7f152ca67580821dc",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F100C8T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F100C8T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F101C6Tx.ioc",
       "bytes": 4084,
       "sha256": "056425ca50230d849c6621e1ffbe60d20727493258f24f876a19ba66b7c517fe",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101C6T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101C6T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F101C8Tx.ioc",
       "bytes": 4084,
       "sha256": "eae74d12186c1aa299dbba307d8e99828a14e6788d3a48de2a35322785bee057",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101C8T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101C8T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F101CGTx.ioc",
       "bytes": 4080,
       "sha256": "86b221a30b7f49686e2b12ce33eeba162e021c9f8a3ad860a6e2a54c279ae0b1",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101CGT6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F101CGT6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F102C6Tx.ioc",
       "bytes": 4084,
       "sha256": "a473dcb36789b96b34cbef13cca9e48523f84e5e9d2da50f7ac593b3e4d6ec00",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F102C6T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F102C6T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F102C8Tx.ioc",
       "bytes": 4084,
       "sha256": "bfc6873a1c9878dc6e861268bc905dbfa8ff915e0ba2bf0f97891f835e6a5e0a",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F102C8T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F102C8T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F103C6Tx.ioc",
       "bytes": 4084,
       "sha256": "6066ee0c8ecde137e1cd98bae6c4837f30469aeead04c86a55656c98c91775d8",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103C6T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103C6T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F103C8Tx.ioc",
       "bytes": 4084,
       "sha256": "a487d32b1d3b88187fc0d2927ca4cd98c1512ca58d8600407364ab6467ed03f8",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103C8T6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103C8T6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F103VETx.ioc",
       "bytes": 4087,
       "sha256": "84d18b224384c96324dd1832667d2fda82edb3392cf795084db2af3f1bd0ee35",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103VET6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103VET6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F103VGTx.ioc",
       "bytes": 4085,
       "sha256": "c1181e0f69db09a015949a8b10c8374f071db58c50fadbc4334160bef96b6b72",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103VGT6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F103VGT6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F105VCTx.ioc",
       "bytes": 4087,
       "sha256": "9352d81a4a9e08b64ea869d1f2bf3b041c7eaaee4ac6fb3aa92dbabf78278a11",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F105VCT6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F105VCT6)",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F107VCTx.ioc",
       "bytes": 4085,
       "sha256": "3816f6095431b1ee9ec4631902abc04b18e1ec9f2c334a311f0de96bbcb36bd7",
-      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F107VCT6)"
+      "source": "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, STM32F107VCT6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F100C8Tx_FLASH.ld",
       "bytes": 8123,
       "sha256": "d52a2f9207d5877cd017826317cf547e7173dcdb1e2d681f07a66fce4e41c9c4",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F100C8T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F100C8T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F101C6Tx_FLASH.ld",
       "bytes": 8123,
       "sha256": "f586031df56eabdcc8108c64ded70355aa1104bf07bc9ffb5a6c0d9becd7fd26",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F101C6T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F101C6T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F101C8Tx_FLASH.ld",
       "bytes": 8125,
       "sha256": "a4b620f5c7e8ea5a24353f5750fdffbe01b43c78f908a86e8c287d3438f6dfd5",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F101C8T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F101C8T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F101CGTx_FLASH.ld",
       "bytes": 8129,
       "sha256": "97fb5daaea916330459c1056337adf1b8511c9c81571790afa56b9932caac1d8",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F101CGT6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F101CGT6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F102C6Tx_FLASH.ld",
       "bytes": 8123,
       "sha256": "20d771ce3be77a968abe22cad855692967ceaffe1f8affc1f64aa334dfe95099",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F102C6T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F102C6T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F102C8Tx_FLASH.ld",
       "bytes": 8125,
       "sha256": "4c779eb072b2ca7fd95e7f276706a6f0cbb9acd37912f3c0389ae7b923982c1e",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F102C8T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F102C8T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F103C6Tx_FLASH.ld",
       "bytes": 8125,
       "sha256": "4b542c1a6d71b551c93f16278fabb6a5afe46bb108c5429a358b8de0a7446eb5",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F103C6T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F103C6T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F103C8Tx_FLASH.ld",
       "bytes": 8125,
       "sha256": "15338b1acd70f5cf8816080e85a3c87fd55ed946dd55e22f4a34c07569586c6a",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F103C8T6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F103C8T6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F103VETx_FLASH.ld",
       "bytes": 8127,
       "sha256": "c712acaebf10459377e85ec0e2bc29132e9fd43b3d0d6983d5b8f49cb7fb8c87",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F103VET6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F103VET6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F103VGTx_FLASH.ld",
       "bytes": 8129,
       "sha256": "4e77310266a8b5472e00c1be9edc001af59192ec720ba03b58073bff6e5ce4fc",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F103VGT6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F103VGT6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F105VCTx_FLASH.ld",
       "bytes": 8127,
       "sha256": "e541c1dd96088f6ef4d7cfc5fdc36d5528eec73bd2deb2b054c0da257070002c",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F105VCT6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F105VCT6)",
+      "profile": "core"
     },
     {
       "path": "ld/f1/STM32F107VCTx_FLASH.ld",
       "bytes": 8127,
       "sha256": "93dab69c15990a017036cae53bec54ff8e7d1b8cc55394230d70613e86394ae0",
-      "source": "renderLinkerScript(STM32F103XX_FLASH.ld, STM32F107VCT6)"
+      "source": "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, STM32F107VCT6)",
+      "profile": "core"
     }
   ]
 }

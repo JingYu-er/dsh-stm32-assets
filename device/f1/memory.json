@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "family": "STM32F1",
+  "sizeUnit": "bytes",
+  "generatedBy": "scripts/build-assets.mjs",
+  "source": "ld/f1/<DeviceId>_FLASH.ld 的 MEMORY 段（本脚本先渲染再解析，与 .ld 逐字节同源）",
+  "count": 12,
+  "notes": [
+    "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
+    "origin 是十六进制字符串、补足 8 位（0x08000000 / 0x20000000）；sizeBytes 是字节数。",
+    "regions 固定按 FLASH、RAM 两区给出；顺序与 .ld 里的书写顺序无关。",
+    "解析时会自校验 sizeBytes 等于 chips.json 里的 flashBytes / ramBytes，对不上就拒绝生成。"
+  ],
+  "devices": [
+    {
+      "deviceId": "STM32F100C8Tx",
+      "linkerScript": "ld/f1/STM32F100C8Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 65536
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 8192
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F101C6Tx",
+      "linkerScript": "ld/f1/STM32F101C6Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 32768
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 6144
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F101C8Tx",
+      "linkerScript": "ld/f1/STM32F101C8Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 65536
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 10240
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F101CGTx",
+      "linkerScript": "ld/f1/STM32F101CGTx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 1048576
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 81920
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F102C6Tx",
+      "linkerScript": "ld/f1/STM32F102C6Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 32768
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 6144
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F102C8Tx",
+      "linkerScript": "ld/f1/STM32F102C8Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 65536
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 10240
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F103C6Tx",
+      "linkerScript": "ld/f1/STM32F103C6Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 32768
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 10240
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F103C8Tx",
+      "linkerScript": "ld/f1/STM32F103C8Tx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 65536
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 20480
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F103VETx",
+      "linkerScript": "ld/f1/STM32F103VETx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 524288
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 65536
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F103VGTx",
+      "linkerScript": "ld/f1/STM32F103VGTx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 1048576
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 98304
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F105VCTx",
+      "linkerScript": "ld/f1/STM32F105VCTx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 262144
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 65536
+        }
+      ]
+    },
+    {
+      "deviceId": "STM32F107VCTx",
+      "linkerScript": "ld/f1/STM32F107VCTx_FLASH.ld",
+      "regions": [
+        {
+          "name": "FLASH",
+          "origin": "0x08000000",
+          "sizeBytes": 262144
+        },
+        {
+          "name": "RAM",
+          "origin": "0x20000000",
+          "sizeBytes": 65536
+        }
+      ]
+    }
+  ]
+}
