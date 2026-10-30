@@ -2,11 +2,13 @@
 /**
  * dsh-stm32-assets 生成脚本：把「随包会变臃肿、但可以按需下载」的资产集中生成到这里。
  *
- * 分五类（manifest 的 profiles 分成 core / full 两层）：
- *   device/f1/   事实层：chips.json（12 个代表型号）、memory.json（Flash/RAM 布局）、
- *                svd-f1.json（外设 → 寄存器 → 位域，来自 ST 官方 SVD）
+ * 分六类（manifest 的 profiles 分成 core / full 两层）：
+ *   device/f1/   事实层：chips.json（14 个代表型号）、memory.json（Flash/RAM 布局）、
+ *                svd/<line>.json（6 条产品线各一份：外设 → 寄存器 → 位域，来自 ST 官方 SVD）
  *   ioc/minimal/ F1 每种容量档的最小 .ioc（从 dsh-stm32 的模板渲染，不是从网上下载的）
  *   ld/f1/       每颗代表型号的 <DeviceId>_FLASH.ld（MEMORY 按 Flash/RAM 渲染）
+ *   startup/f1/  14 个 gcc 启动文件 startup_stm32f1*.s（从本机 CubeMX 固件包复制，离线兜底用）
+ *   headers/f1/  16 个 CMSIS 设备头（14 个 stm32f1xx 设备头 + stm32f1xx.h + system_stm32f1xx.h）
  *   chipdb/f1/   CubeMX 的 db/mcu 里 F1 的 XML（引脚/复用/容量的事实源）
  *   diagrams/    Archify 架构图（不再进 npm 包，放这里分享）
  *
@@ -15,15 +17,18 @@
  *   node scripts/build-assets.mjs --check                 # 只校验（CI）：与生成结果不一致就退 1
  *   node scripts/build-assets.mjs --plugin <dsh-stm32>    # 插件仓库在哪（默认同级 dsh-stm32）
  *   node scripts/build-assets.mjs --cube-mx <CubeMX 根>   # CubeMX 装在哪（默认 D:/app/STM32CubeMX）
- *   node scripts/build-assets.mjs --svd <本机 SVD 文件>   # 手上已有 STM32F103xx.svd 时直接用
+ *   node scripts/build-assets.mjs --firmware <固件包根>    # CubeMX 固件包在哪（startup/设备头的来源）
+ *   node scripts/build-assets.mjs --svd <本机 SVD 文件>   # 手上已有某条 line 的 STM32F1xx.svd 时直接用
+ *   node scripts/build-assets.mjs --svd-dir <目录>        # 6 个 SVD 都在本机时一次性指定（离线）
  *
  * 三条设计约束（别破坏，否则 --check 在 CI 上没法用）：
  *   1. 幂等：产物文本里**不写时间戳、不写本机绝对路径**，重复跑逐字节不变。
  *   2. 先算后写：全部产物先在内存里生成完（Map<相对路径, bytes>），再统一写盘或统一比对；
  *      中途失败不会留下半套文件。
- *   3. 可离线：SVD 依次试 --svd → 本地缓存 → 下载 → 沿用上次生成的 svd-f1.json →
- *      手写子集（catch 不到就明说，不假装完整）。chipdb / diagrams 的源目录不存在时
- *      沿用上次生成的文件，不让一台没装 CubeMX 的机器把资产删空。
+ *   3. 可离线：SVD 依次试 --svd / --svd-dir → .cache/svd/ → 下载并写缓存；都没有就**明确报错退 2**
+ *      （v2026.10.30-2 起没有手写兜底了：半份 SVD 比没有更容易误导人）。startup / 设备头必须来自
+ *      本机固件包，缺了同样报错退 2；chipdb / diagrams 的源目录不存在时沿用上次生成的文件，
+ *      不让一台没装 CubeMX 的机器把资产删空。
  *
  * 产物是生成物，不要手改：改了下次 --check 就会红。
  */
@@ -33,26 +38,40 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
-    SVD_NOTES_HANDWRITTEN,
-    SVD_NOTES_ST,
-    SVD_SOURCE,
-    buildSvdF1,
+    SVD_COMMIT,
+    SVD_LICENSE,
+    SVD_LINES,
+    SVD_REPO,
+    buildSvdDoc,
+    lineFromFileName,
     normalizeAddress,
     parseSvd,
-    renderSvdF1,
+    renderSvdDoc,
     svdCounts,
+    svdFileName,
+    svdNotes,
+    svdSource,
 } from "./svd-f1.mjs";
-import { HANDWRITTEN_SOURCE, handwrittenPeripherals } from "./svd-handwritten-f1.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const assetsRoot = resolve(here, "..");
 
 /** manifest 的两层 profile：core 是建工程/烧录必需，full 再加上 CubeMX 的 db 与架构图。 */
 const PROFILE_CORE = ["device/**", "ioc/**", "ld/**"];
-const PROFILE_FULL = ["device/**", "ioc/**", "ld/**", "chipdb/**", "diagrams/**"];
+const PROFILE_FULL = ["device/**", "ioc/**", "ld/**", "chipdb/**", "diagrams/**", "startup/**", "headers/**"];
 
 /** 这些目录里的文件全部由本脚本托管：多出来的文件说明有残留，--check 要报出来。 */
-const MANAGED_DIRS = ["device", "ioc", "ld", "chipdb", "diagrams"];
+const MANAGED_DIRS = ["device", "ioc", "ld", "chipdb", "diagrams", "startup", "headers"];
+
+/** startup 与设备头来自本机 CubeMX 固件包：14 个 gcc 启动文件、16 个头。 */
+const DEFAULT_FIRMWARE_ROOT = "D:/app/STM32CubeMX/Repository/STM32Cube_FW_F1_V1.8.7";
+const FIRMWARE_CMSIS_DIR = "Drivers/CMSIS/Device/ST/STM32F1xx";
+const FIRMWARE_STARTUP_SUBDIR = "Source/Templates/gcc";
+const FIRMWARE_HEADER_SUBDIR = "Include";
+const STARTUP_COUNT = 14;
+const HEADER_COUNT = 16;
+/** 固件包的许可：CMSIS Device 部分是 Apache-2.0（Copyright ARM Limited - STMicroelectronics，见固件包根 License.md）。 */
+const FIRMWARE_LICENSE = "Apache License 2.0";
 
 /** 版本号写在仓库根的 VERSION 里（YYYY.MM.DD-N）：跑脚本不会改它，发布时才手动抬。 */
 const VERSION_PATTERN = /^\d{4}\.\d{2}\.\d{2}-\d+$/u;
@@ -79,7 +98,9 @@ function parseArgs(argv) {
         help: false,
         pluginRoot: resolve(assetsRoot, "..", "dsh-stm32"),
         cubeMxRoot: "",
-        svdPath: "",
+        firmwareRoot: "",
+        svdPaths: [],
+        svdDir: "",
     };
     for (let index = 2; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -104,10 +125,19 @@ function parseArgs(argv) {
                 options.cubeMxRoot = next();
                 break;
             case "--svd":
-                options.svdPath = resolve(next());
+                options.svdPaths.push(resolve(next()));
+                break;
+            case "--svd-dir":
+                options.svdDir = resolve(next());
+                break;
+            case "--firmware":
+                options.firmwareRoot = resolve(next());
                 break;
             default:
-                fail("不认识的参数：" + arg + "（可用：--check / --plugin <dir> / --cube-mx <dir> / --svd <file> / --help）");
+                fail(
+                    "不认识的参数：" + arg +
+                    "（可用：--check / --plugin <dir> / --cube-mx <dir> / --firmware <dir> / --svd <file> / --svd-dir <dir> / --help）",
+                );
         }
     }
     return options;
@@ -119,6 +149,28 @@ function cubeMxRootOf(options) {
     const fromEnv = (process.env.STM32_CUBEMX_ROOT ?? process.env.STM32CUBEMX_ROOT ?? "").trim();
     if (fromEnv !== "") return fromEnv;
     return "D:/app/STM32CubeMX";
+}
+
+/** 固件包根：--firmware > STM32CUBE_FW_F1_ROOT / STM32_FW_F1_ROOT > 内置默认值（CubeMX 默认仓库位置）。 */
+function firmwareRootOf(options) {
+    if (options.firmwareRoot !== "") return options.firmwareRoot;
+    const fromEnv = (process.env.STM32CUBE_FW_F1_ROOT ?? process.env.STM32_FW_F1_ROOT ?? "").trim();
+    if (fromEnv !== "") return fromEnv;
+    return DEFAULT_FIRMWARE_ROOT;
+}
+
+/** 固件包版本号（…_V1.8.7 → 1.8.7）；目录名不合这个格式就把目录名当版本记下来。 */
+function firmwareVersionOf(root) {
+    const name = basename(resolve(root));
+    const match = /V(\d+\.\d+\.\d+)$/u.exec(name);
+    return match === null ? name : match[1];
+}
+
+/** 单个 startup / 设备头在 manifest 里的 source：写清固件包版本、包内相对路径与许可。 */
+function firmwareSource(kind, relPath, version) {
+    const label = kind === "startup" ? "gcc 启动文件" : "CMSIS 设备头";
+    return "ST 官方固件包 STM32Cube_FW_F1_V" + version + " / " + FIRMWARE_CMSIS_DIR + "/" + relPath +
+        "（" + label + "，" + FIRMWARE_LICENSE + "）";
 }
 
 /** 路径统一成正斜杠：manifest 与日志里不混用 \ 和 /（也不随平台漂）。 */
@@ -223,123 +275,101 @@ function createOutputs() {
     return { map, add };
 }
 
-/**
- * SVD 取数：按「离线优先、可疑就降级但仍诚实」的顺序找。
- * 返回 { text, source, counts, origin }，origin 只用于终端提示（不进产物）。
- */
-async function resolveSvd(options) {
-    const attempts = [];
-
-    const fromParsed = (parsed, source, origin) => {
-        const doc = buildSvdF1({
-            peripherals: parsed.peripherals,
-            addressUnitBits: parsed.addressUnitBits,
-            deviceName: parsed.deviceName,
-            deviceVersion: parsed.deviceVersion,
-            source,
-            notes: SVD_NOTES_ST,
-        });
-        const counts = svdCounts(doc.peripherals);
-        if (counts.peripherals === 0) throw new Error("解析出 0 个外设");
-        return { text: renderSvdF1(doc), source, counts, origin };
-    };
-
-    if (options.svdPath !== "") {
-        if (!existsSync(options.svdPath)) fail("--svd 指向的文件不存在：" + options.svdPath);
-        const parsed = parseSvd(readFileSync(options.svdPath, "utf8"));
-        return fromParsed(
-            parsed,
-            {
-                kind: "st-svd",
-                file: basename(options.svdPath),
-                device: parsed.deviceName,
-                version: parsed.deviceVersion,
-                note: "由 --svd 指定的本机 ST SVD 文件（同一份内容任意机器上解析结果相同）",
-            },
-            "--svd " + basename(options.svdPath),
-        );
+/** 把一段 SVD 原文变成「已渲染的产物 + source + counts」：解析失败就直接报错。 */
+function svdEntryFromText(text, line, origin) {
+    const file = svdFileName(line);
+    let parsed;
+    try {
+        parsed = parseSvd(text);
+    } catch (error) {
+        fail("解析 " + file + " 失败（来源：" + origin + "）：" + error.message);
     }
-
-    const cacheFile = join(assetsRoot, ".cache/svd", SVD_SOURCE.file);
-    let raw = null;
-    if (existsSync(cacheFile)) {
-        raw = readFileSync(cacheFile, "utf8");
-        attempts.push("缓存 " + slashed(".cache/svd/" + SVD_SOURCE.file));
-    } else {
-        try {
-            const response = await fetch(SVD_SOURCE.url, {
-                headers: { "user-agent": "dsh-stm32-assets build-assets.mjs" },
-                signal: AbortSignal.timeout(30000),
-            });
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            const text = await response.text();
-            if (!text.includes("<device") || !text.includes("<peripherals")) throw new Error("下载到的内容不像 SVD");
-            raw = text;
-            if (!options.check) {
-                mkdirSync(dirname(cacheFile), { recursive: true });
-                writeFileSync(cacheFile, text, "utf8");
-            }
-            attempts.push("下载 " + SVD_SOURCE.url);
-        } catch (error) {
-            attempts.push("下载失败（" + error.message + "）");
-        }
-    }
-
-    if (raw !== null) {
-        try {
-            const parsed = parseSvd(raw);
-            return fromParsed(
-                parsed,
-                {
-                    kind: "st-svd",
-                    repo: SVD_SOURCE.repo,
-                    commit: SVD_SOURCE.commit,
-                    path: SVD_SOURCE.path,
-                    url: SVD_SOURCE.url,
-                    device: parsed.deviceName,
-                    version: parsed.deviceVersion,
-                    license: SVD_SOURCE.license,
-                },
-                attempts[attempts.length - 1],
-            );
-        } catch (error) {
-            attempts.push("缓存/下载的 SVD 解析失败（" + error.message + "）");
-        }
-    }
-
-    // 离线兜底第一层：仓库里已经有上次生成的 svd-f1.json 就原样沿用（不重写、不改 source）。
-    const existing = join(assetsRoot, "device/f1/svd-f1.json");
-    if (existsSync(existing)) {
-        try {
-            const parsed = JSON.parse(readFileSync(existing, "utf8"));
-            if (Array.isArray(parsed.peripherals) && parsed.peripherals.length > 0) {
-                const counts = svdCounts(parsed.peripherals);
-                return {
-                    text: readFileSync(existing),
-                    source: parsed.source,
-                    counts,
-                    origin: "沿用已有 device/f1/svd-f1.json（取不到 ST 原件）",
-                };
-            }
-        } catch {
-            attempts.push("已有 device/f1/svd-f1.json 也读不动");
-        }
-    }
-
-    // 离线兜底第二层：手写子集。写完在终端明说「这不是完整 SVD」。
-    const handwritten = buildSvdF1({
-        peripherals: handwrittenPeripherals(),
-        addressUnitBits: 8,
-        source: HANDWRITTEN_SOURCE,
-        notes: SVD_NOTES_HANDWRITTEN,
+    const source = { ...svdSource(line), device: parsed.deviceName, version: parsed.deviceVersion };
+    const doc = buildSvdDoc({
+        line,
+        source,
+        notes: svdNotes(line),
+        peripherals: parsed.peripherals,
+        deviceName: parsed.deviceName,
+        deviceVersion: parsed.deviceVersion,
+        addressUnitBits: parsed.addressUnitBits,
     });
-    console.warn("⚠ 拿不到 ST 官方 STM32F103xx.svd（" + attempts.join("；") + "），改用**手写子集**（不是完整 SVD）");
-    return {
-        text: renderSvdF1(handwritten),
-        source: HANDWRITTEN_SOURCE,
-        counts: svdCounts(handwritten.peripherals),
-        origin: "手写子集（离线兜底）",
-    };
+    const counts = svdCounts(doc.peripherals);
+    if (counts.peripherals === 0) fail(file + " 解析出 0 个外设（来源：" + origin + "）");
+    return { text: renderSvdDoc(doc), source, counts, origin };
+}
+
+/**
+ * --svd / --svd-dir 解析成一张「line → 本机文件」的表（--svd 优先；--svd-dir 必须 6 个齐全）。
+ * 文件名认不出 line 就报错：不做「猜一个用着」这种静默降级。
+ */
+function explicitSvdFiles(options) {
+    const byLine = new Map();
+    for (const path of options.svdPaths) {
+        if (!existsSync(path)) fail("--svd 指向的文件不存在：" + slashed(path));
+        const line = lineFromFileName(basename(path));
+        if (line === null || !SVD_LINES.includes(line)) {
+            fail(
+                "--svd 的文件名认不出属于哪条 line：" + basename(path) +
+                "（期望 STM32F1<line>xx.svd，line ∈ " + SVD_LINES.join("/") + "）",
+            );
+        }
+        byLine.set(line, path);
+    }
+    if (options.svdDir !== "") {
+        if (!existsSync(options.svdDir)) fail("--svd-dir 指向的目录不存在：" + slashed(options.svdDir));
+        const missing = SVD_LINES.filter((line) => !existsSync(join(options.svdDir, svdFileName(line))));
+        if (missing.length > 0) {
+            fail(
+                "--svd-dir 里缺 " + missing.length + " 个文件：" + missing.map(svdFileName).join("、") +
+                "（给了 --svd-dir 就要求 6 个齐全，免得一半走本机一半走网络）",
+            );
+        }
+        for (const line of SVD_LINES) {
+            if (!byLine.has(line)) byLine.set(line, join(options.svdDir, svdFileName(line)));
+        }
+    }
+    return byLine;
+}
+
+/**
+ * 取某条 line 的 SVD：--svd / --svd-dir → .cache/svd/ → 下载并写缓存 → **报错退 2**。
+ * 刻意没有「沿用上次生成的 json」和「手写子集」两级兜底：那两级会让人以为资产是完整的。
+ */
+async function resolveSvdLine(line, explicit, options) {
+    const file = svdFileName(line);
+    const local = explicit.get(line);
+    if (local !== undefined) {
+        return svdEntryFromText(readFileSync(local, "utf8"), line, "--svd/--svd-dir " + basename(local));
+    }
+    const cacheFile = join(assetsRoot, ".cache/svd", file);
+    if (existsSync(cacheFile)) {
+        return svdEntryFromText(readFileSync(cacheFile, "utf8"), line, "缓存 .cache/svd/" + file);
+    }
+    const source = svdSource(line);
+    let reason = "";
+    try {
+        const response = await fetch(source.url, {
+            headers: { "user-agent": "dsh-stm32-assets build-assets.mjs" },
+            signal: AbortSignal.timeout(60000),
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const raw = await response.text();
+        if (!raw.includes("<device") || !raw.includes("<peripherals")) throw new Error("下载到的内容不像 SVD");
+        if (!options.check) {
+            mkdirSync(dirname(cacheFile), { recursive: true });
+            writeFileSync(cacheFile, raw, "utf8");
+        }
+        return svdEntryFromText(raw, line, "下载 " + source.url);
+    } catch (error) {
+        reason = error.message;
+    }
+    return fail(
+        "取不到 ST 官方 SVD " + file + "（第 " + line + " 条 line，来源 " + source.url + "）：下载失败（" + reason + "）" +
+        "，本地缓存 .cache/svd/" + file + " 也不存在。构建需要 6 条 line 的 SVD 才能产出完整的 device/f1/svd/，" +
+        "不做静默降级：先联网跑一次 node scripts/build-assets.mjs 让缓存落盘，或把原件放进 .cache/svd/，" +
+        "或用 --svd <file> / --svd-dir <dir> 指定本机已有的文件。",
+    );
 }
 
 function renderJson(value) {
@@ -353,7 +383,10 @@ const HELP = [
     "  --check               只校验磁盘上的资产是否与生成结果一致，不一致退 1，不写盘",
     "  --plugin <dir>        dsh-stm32 插件仓库（默认同级目录 dsh-stm32）",
     "  --cube-mx <dir>       CubeMX 安装根（默认 STM32_CUBEMX_ROOT 或 D:/app/STM32CubeMX）",
-    "  --svd <file>          直接用本机这份 STM32F103xx.svd（不下载）",
+    "  --firmware <dir>     CubeMX 固件包根（startup / 设备头的来源，默认 STM32CUBE_FW_F1_ROOT",
+    "                      或 D:/app/STM32CubeMX/Repository/STM32Cube_FW_F1_V1.8.7）",
+    "  --svd <file>          直接用本机这份 STM32F1<line>xx.svd（可重复，按文件名认 line）",
+    "  --svd-dir <dir>       6 条 line 的 SVD 都在这个目录里（离线构建，必须 6 个齐全）",
     "  --help                这份说明",
     "",
     "退出码：0 成功一致 / 1 有差异 / 2 参数或输入有问题",
@@ -494,13 +527,79 @@ async function run(options) {
         "core",
     );
 
-    // 3) SVD → svd-f1.json
-    const svd = await resolveSvd(options);
+    // 3) SVD → device/f1/svd/<line>.json：F1 的 6 条产品线各一份，每份只覆盖自己那条 line
+    const explicitSvd = explicitSvdFiles(options);
+    const svdLines = [];
+    const svdTotals = { peripherals: 0, registers: 0, fields: 0 };
     // SVD 的原始文件是 ST 的 EULA（cmsis-svd-data 的 data/STMicro/License.html），再分发授权不明确，
-  // 所以只放进 full：默认的 core 下载不含它；要用寄存器命名的人再显式拉 full。
-  add("device/f1/svd-f1.json", svd.text, "ST 官方 SVD → 精简事实表（见文件内 source 字段）", "full");
+    // 所以只放进 full：默认的 core 下载不含它；要做寄存器视图的人再显式拉 full。
+    for (const line of SVD_LINES) {
+        const entry = await resolveSvdLine(line, explicitSvd, options);
+        add(
+            "device/f1/svd/" + line + ".json",
+            entry.text,
+            "ST SVD " + svdFileName(line) + " → 精简事实表（见文件内 source 字段）",
+            "full",
+        );
+        svdLines.push({ line, path: "device/f1/svd/" + line + ".json", counts: entry.counts, source: entry.source });
+        svdTotals.peripherals += entry.counts.peripherals;
+        svdTotals.registers += entry.counts.registers;
+        svdTotals.fields += entry.counts.fields;
+    }
 
-    // 4) CubeMX 的 F1 db XML：源目录不在就沿用上次生成的文件（不删空）
+    // 4) startup 与设备头：从本机 CubeMX 固件包复制（离线兜底：没有 CubeMX 也能编译）
+    const firmwareRoot = firmwareRootOf(options);
+    const cmsisRoot = join(firmwareRoot, FIRMWARE_CMSIS_DIR);
+    if (!existsSync(cmsisRoot)) {
+        fail(
+            "找不到本机 CubeMX 固件包的 CMSIS 目录：" + slashed(cmsisRoot) +
+            "（用 --firmware 指到 STM32Cube_FW_F1_Vx.y.z 根目录，或用环境变量 STM32CUBE_FW_F1_ROOT）",
+        );
+    }
+    const firmwareVersion = firmwareVersionOf(firmwareRoot);
+    const startupDir = join(cmsisRoot, FIRMWARE_STARTUP_SUBDIR);
+    const headerDir = join(cmsisRoot, FIRMWARE_HEADER_SUBDIR);
+    for (const [dir, what] of [[startupDir, "启动文件"], [headerDir, "设备头"]]) {
+        if (!existsSync(dir)) fail("固件包结构不对：缺 " + slashed(dir) + "（" + what + "目录）");
+    }
+    const startupNames = readdirSync(startupDir).filter((name) => /^startup_stm32f1\w*\.s$/u.test(name)).sort();
+    const headerNames = readdirSync(headerDir).filter((name) => /^[\w.-]+\.h$/u.test(name)).sort();
+    if (startupNames.length !== STARTUP_COUNT) {
+        fail(
+            "固件包里的 startup 有 " + startupNames.length + " 个，期望 " + STARTUP_COUNT + " 个：" + startupNames.join("、") +
+            "（ST 换了新版本就先确认是多了还是少了，再改 STARTUP_COUNT）",
+        );
+    }
+    if (headerNames.length !== HEADER_COUNT) {
+        fail(
+            "固件包里的设备头有 " + headerNames.length + " 个，期望 " + HEADER_COUNT + " 个：" + headerNames.join("、") +
+            "（ST 换了新版本就先确认是多了还是少了，再改 HEADER_COUNT）",
+        );
+    }
+    for (const name of startupNames) {
+        add(
+            "startup/f1/" + name,
+            readFileSync(join(startupDir, name)),
+            firmwareSource("startup", FIRMWARE_STARTUP_SUBDIR + "/" + name, firmwareVersion),
+            "full",
+        );
+    }
+    for (const name of headerNames) {
+        add(
+            "headers/f1/" + name,
+            readFileSync(join(headerDir, name)),
+            firmwareSource("header", FIRMWARE_HEADER_SUBDIR + "/" + name, firmwareVersion),
+            "full",
+        );
+    }
+    // 交叉校验：chips.json 每颗芯片指名的启动文件与设备头，必须都在刚复制的这批文件里
+    for (const chip of chips) {
+        for (const [rel, what] of [["startup/f1/" + chip.startup, "启动文件"], ["headers/f1/" + chip.deviceHeader, "设备头"]]) {
+            if (!outputs.has(rel)) fail(chip.cpn + " 指名的" + what + " " + rel + " 不在固件包里（" + FIRMWARE_CMSIS_DIR + "）");
+        }
+    }
+
+    // 5) CubeMX 的 F1 db XML：源目录不在就沿用上次生成的文件（不删空）
     const dbDir = join(cubeMxRootOf(options), "db/mcu");
     let chipdbCount = 0;
     if (existsSync(dbDir)) {
@@ -524,7 +623,7 @@ async function run(options) {
         console.log("· chipdb：" + slashed(dbDir) + " 不存在，沿用已有 " + chipdbCount + " 个文件");
     }
 
-    // 5) 架构图：同上，源目录不在就沿用
+    // 6) 架构图：同上，源目录不在就沿用
     const diagramSrc = join(pluginRoot, "docs/diagrams");
     let diagramCount = 0;
     if (existsSync(diagramSrc)) {
@@ -544,7 +643,7 @@ async function run(options) {
         console.log("· diagrams：" + slashed(diagramSrc) + " 不存在，沿用已有 " + diagramCount + " 个文件");
     }
 
-    // 6) manifest v2：profiles 分层 + 每个文件带 profile；不写时间戳与本机路径，保证幂等
+    // 7) manifest v2：profiles 分层 + 每个文件带 profile；不写时间戳与本机路径，保证幂等
     const assets = [...outputs.values()].filter((output) => output.kind === "asset");
     const files = [...outputs.entries()]
         .filter(([, output]) => output.kind === "asset")
@@ -562,13 +661,19 @@ async function run(options) {
         ld: files.filter((entry) => entry.path.startsWith("ld/")).length,
         chipdb: files.filter((entry) => entry.path.startsWith("chipdb/")).length,
         diagrams: files.filter((entry) => entry.path.startsWith("diagrams/")).length,
+        svd: files.filter((entry) => entry.path.startsWith("device/f1/svd/")).length,
+        startup: files.filter((entry) => entry.path.startsWith("startup/")).length,
+        headers: files.filter((entry) => entry.path.startsWith("headers/")).length,
     };
+    // full 的 glob 是 core 的超集，所以「full 文件数」就是全部资产数；两者都写进 manifest，消费方不用自己算。
+    const profileCounts = { core: files.filter((entry) => entry.profile === "core").length, full: files.length };
     const manifest = {
         name: "dsh-stm32-assets",
         version: version.version,
         schema: 2,
         generatedBy: "scripts/build-assets.mjs",
         profiles: { core: PROFILE_CORE, full: PROFILE_FULL },
+        profileCounts,
         counts,
         device: {
             chips: {
@@ -582,11 +687,32 @@ async function run(options) {
                 source: "ld/f1 的 MEMORY 段",
             },
             svd: {
-                path: "device/f1/svd-f1.json",
-                kind: svd.source?.kind ?? "unknown",
-                counts: svd.counts,
-                source: svd.source,
+                dir: "device/f1/svd/",
+                count: svdLines.length,
+                kind: "st-svd",
+                counts: svdTotals,
+                source: {
+                    repo: SVD_REPO,
+                    commit: SVD_COMMIT,
+                    license: SVD_LICENSE,
+                    path: "data/STMicro/STM32F1<line>xx.svd",
+                },
+                lines: svdLines,
             },
+        },
+        startup: {
+            dir: "startup/f1/",
+            count: counts.startup,
+            package: "STM32Cube_FW_F1_V" + firmwareVersion,
+            license: FIRMWARE_LICENSE + "（CMSIS Device 部分，Copyright ARM Limited - STMicroelectronics）",
+            source: "ST 官方固件包 " + FIRMWARE_CMSIS_DIR + "/" + FIRMWARE_STARTUP_SUBDIR + "/startup_*.s",
+        },
+        headers: {
+            dir: "headers/f1/",
+            count: counts.headers,
+            package: "STM32Cube_FW_F1_V" + firmwareVersion,
+            license: FIRMWARE_LICENSE + "（CMSIS Device 部分，Copyright ARM Limited - STMicroelectronics）",
+            source: "ST 官方固件包 " + FIRMWARE_CMSIS_DIR + "/" + FIRMWARE_HEADER_SUBDIR + "/*.h",
         },
         skipped,
         files,
@@ -594,7 +720,7 @@ async function run(options) {
     add("manifest.json", renderJson(manifest), "manifest v2：profiles + 每个文件的 profile/sha256", null, "manifest");
     add("VERSION", version.version + "\n", "资产版本号（YYYY.MM.DD-N，发布时手动抬）", null, "version");
 
-    // 7) 统一写盘 / 统一比对
+    // 8) 统一写盘 / 统一比对
     const problems = [];
     if (!options.check) {
         for (const [rel, output] of outputs) {
@@ -630,15 +756,19 @@ async function run(options) {
     }
 
     const totalBytes = assets.reduce((sum, output) => sum + output.bytes.length, 0);
-    const coreCount = files.filter((entry) => entry.profile === "core").length;
-    const header = "manifest v" + version.version + "：资产 " + files.length + " 个（core " + coreCount + " / full " +
-        files.length + "），另加 manifest.json 与 VERSION 共 " + outputs.size + " 个文件，" +
-        (totalBytes / 1024).toFixed(0) + " KB";
+    const header = "manifest v" + version.version + "：资产 " + files.length + " 个（core " + profileCounts.core + " / full " +
+        profileCounts.full + "），另加 manifest.json 与 VERSION 共 " + outputs.size + " 个文件，共 " + totalBytes + " 字节（" +
+        (totalBytes / 1024 / 1024).toFixed(2) + " MB）";
     console.log(
-        "device/f1：chips " + chips.length + " 颗、memory " + memoryDevices.length + " 颗、svd " + svd.counts.peripherals +
-        " 外设 / " + svd.counts.registers + " 寄存器 / " + svd.counts.fields + " 位域（" + svd.origin + "）",
+        "device/f1：chips " + chips.length + " 颗、memory " + memoryDevices.length + " 颗、" +
+        "svd " + svdLines.length + " 条 line（" + svdTotals.peripherals + " 外设 / " + svdTotals.registers +
+        " 寄存器 / " + svdTotals.fields + " 位域）",
     );
-    console.log("ioc/minimal：" + counts.ioc + " 个；ld/f1：" + counts.ld + " 个；chipdb/f1：" + counts.chipdb + " 个；diagrams：" + counts.diagrams + " 个");
+    console.log(
+        "ioc/minimal：" + counts.ioc + " 个；ld/f1：" + counts.ld + " 个；svd：" + counts.svd + " 条；" +
+        "startup/f1：" + counts.startup + " 个；headers/f1：" + counts.headers + " 个；" +
+        "chipdb/f1：" + counts.chipdb + " 个；diagrams：" + counts.diagrams + " 个",
+    );
     if (skipped.length > 0) {
         console.log("跳过 " + skipped.length + " 个型号：");
         for (const reason of skipped) console.log("  skip " + reason);

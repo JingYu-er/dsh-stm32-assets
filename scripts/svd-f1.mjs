@@ -1,8 +1,8 @@
 /**
- * STM32F1 的 CMSIS-SVD → 精简事实表（device/f1/svd-f1.json）。
+ * STM32F1 的 CMSIS-SVD → 精简事实表（device/f1/svd/<line>.json，6 条 line 各一个文件）。
  *
  * 为什么要这一层：SVD 是「外设 → 寄存器 → 位域」的权威事实源（debug 的寄存器视图、
- * 按位写寄存器的代码都得靠它），但原始 ST SVD 是 800 KB 的 XML，还带 description /
+ * 按位写寄存器的代码都得靠它），但原始 ST SVD 是 300 KB ~ 1.2 MB 的 XML，还带 description /
  * enumeratedValues / resetValue 这些这份表用不到的东西。这里把 XML 解析成 JSON：
  *
  *   peripheral { name, baseAddress, registers: [ { name, addressOffset, size, access, fields } ] }
@@ -16,38 +16,70 @@
  *   3. peripheral 的 derivedFrom 已经**展开**：SVD 里 GPIOB..G 只写了 baseAddress，
  *      寄存器是从 GPIOA 继承来的；这份表里每个外设都有完整寄存器，消费方不用再做继承。
  *
- * 数据来源是 ST 发布的 STM32F103xx SVD（这里用的是 cmsis-svd-data 仓库里的 ST 原件，
- * 按 commit 固定）。F1 的其它产品线（F105/F107 独有的 CAN2、USB OTG_FS、以太网）不在
- * 这份表里，见 device/f1/svd-f1.json 的 notes。
+ * 覆盖范围与分工：STM32F1 有 6 条产品线（F100/F101/F102/F103/F105/F107），上游 cmsis-svd-data
+ * 的 data/STMicro 下正好有 6 个对应的 SVD。**每个文件只覆盖自己那条 line**：
+ *   device/f1/svd/100.json ← STM32F100xx.svd    device/f1/svd/101.json ← STM32F101xx.svd
+ *   device/f1/svd/102.json ← STM32F102xx.svd    device/f1/svd/103.json ← STM32F103xx.svd
+ *   device/f1/svd/105.json ← STM32F105xx.svd    device/f1/svd/107.json ← STM32F107xx.svd
+ * 跨 line 的同名外设（GPIOA、USART1……）布局相同，但**独有外设只出现在对应文件里**：
+ * F105/F107 的 CAN2、USB OTG_FS、以太网只在 105/107；F100 的 CEC、F102 的 USB 同理。
+ * 想知道「这颗芯片有没有 CAN2」就看对应 line 的文件，别拿 103 的表去查 107。
  */
 
-/** 上游 SVD 的固定坐标：按 commit 取，保证任何机器上重跑都解析出同一份结果。 */
-export const SVD_SOURCE = {
-    repo: "cmsis-svd/cmsis-svd-data",
-    commit: "c65f8551e57c770344d229dcaa0bf838fa29aff4",
-    path: "data/STMicro/STM32F103xx.svd",
-    url: "https://raw.githubusercontent.com/cmsis-svd/cmsis-svd-data/c65f8551e57c770344d229dcaa0bf838fa29aff4/data/STMicro/STM32F103xx.svd",
-    file: "STM32F103xx.svd",
-    device: "STM32F103xx",
-    license: "STMicroelectronics End User License Agreement v1.0（cmsis-svd-data 的 data/STMicro/License.html）",
-};
+/** 上游 SVD 的固定坐标：同一个 repo、同一个 commit 取 6 个文件，保证任何机器上重跑都解析出同一份结果。 */
+export const SVD_REPO = "cmsis-svd/cmsis-svd-data";
+export const SVD_COMMIT = "c65f8551e57c770344d229dcaa0bf838fa29aff4";
+export const SVD_LICENSE = "STMicroelectronics End User License Agreement v1.0（cmsis-svd-data 的 data/STMicro/License.html）";
 
-/** ST SVD 派生出的 svd-f1.json 里 notes 的标准几段（手写兜底另有一段）。 */
-export const SVD_NOTES_ST = [
-    "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
-    "覆盖范围：STM32F103xx 这一条产品线（F100/F101/F102/F103 的绝大多数外设与它同名同布局）。F105/F107 独有的 CAN2、USB OTG_FS、以太网不在这份表里；要支持它们就按同样方式再解析一份 STM32F107xx.svd 合进来。",
-    "peripheral 的 derivedFrom 已经展开（GPIOB..G 的寄存器从 GPIOA 继承，DMA2 从 DMA1，TIM3/4/5 从 TIM2……），消费方不用再做继承。",
-    "只保留 name/addressOffset/size/access/fields；description、enumeratedValues、resetValue 都丢了——这份表用来查寄存器与位域，不是用来生成头文件的。",
-    "addressOffset 是相对外设 baseAddress 的字节偏移；size 与 bitWidth 的单位是位（sizeUnit=bits）。",
-];
+/** F1 的 6 条产品线（顺序固定：产物顺序、manifest、日志都按它）。 */
+export const SVD_LINES = ["100", "101", "102", "103", "105", "107"];
 
-/** 手写兜底时用的 notes：先把「这不是完整 SVD」说清楚。 */
-export const SVD_NOTES_HANDWRITTEN = [
-    "生成物（手写兜底），不要手改：改数据跑 node scripts/build-assets.mjs。",
-    "**这不是完整的 SVD**：拿不到 ST 官方 STM32F103xx.svd（离线、代理、镜像都取不到）时，脚本退回到手写的最小可用子集——只覆盖 GPIOA..GPIOE、RCC、FLASH、USART1、TIM2 的常用寄存器与位域，其余外设缺失。",
-    "补齐办法：联网后跑 node scripts/build-assets.mjs（会重新下载并把这份手写子集换成 ST 的 SVD），或用 --svd <本机 STM32F103xx.svd 路径> 指一份手上的。",
-    "addressOffset 是相对外设 baseAddress 的字节偏移；size 与 bitWidth 的单位是位（sizeUnit=bits）。",
-];
+/** line（"103"）→ 上游文件名（STM32F103xx.svd）。 */
+export function svdFileName(line) {
+    return "STM32F" + String(line) + "xx.svd";
+}
+
+/**
+ * 上游文件的坐标（repo/commit/path/url/license + file/line），写进每个产物 JSON 的 source 段。
+ * kind=st-svd 表示「ST 原件解析」，消费方据此判断数据可信度（不再有手写兜底那种 kind）。
+ */
+export function svdSource(line) {
+    const file = svdFileName(line);
+    const path = "data/STMicro/" + file;
+    return {
+        kind: "st-svd",
+        repo: SVD_REPO,
+        commit: SVD_COMMIT,
+        path,
+        url: "https://raw.githubusercontent.com/" + SVD_REPO + "/" + SVD_COMMIT + "/" + path,
+        file,
+        line: String(line),
+        license: SVD_LICENSE,
+    };
+}
+
+/** 文件名 → line：认 STM32F103xx.svd 这种写法，认不出返回 null（调用方给可读报错）。 */
+export function lineFromFileName(name) {
+    const match = /^STM32F(\d{3})xx\.svd$/iu.exec(String(name ?? "").split("/").pop() ?? "");
+    return match === null ? null : match[1];
+}
+
+/**
+ * 每条 line 的 notes（写进产物，消费方不用翻文档）。模板里塞的是这条 line 自己的数字/文件名，
+ * 所以 6 个文件的 notes 不完全一样——这是刻意的：看到 107.json 就该知道 CAN2 在这里。
+ */
+export function svdNotes(line) {
+    const name = svdFileName(line);
+    const others = SVD_LINES.filter((item) => item !== String(line));
+    return [
+        "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
+        "覆盖范围：**只有 " + name.replace(/\.svd$/u, "") + " 这一条产品线**（line=" + line + "）。" +
+        "F1 的其它 line 在 device/f1/svd/" + others.join(".json、") + ".json——独有外设不会跨文件出现，查 F105/F107 的 CAN2、USB OTG_FS、以太网要看 105/107 自己的文件。",
+        "peripheral 的 derivedFrom 已经展开（GPIOB..G 的寄存器从 GPIOA 继承，DMA2 从 DMA1，TIM3/4/5 从 TIM2……），消费方不用再做继承。",
+        "只保留 name/addressOffset/size/access/fields；description、enumeratedValues、resetValue 都丢了——这份表用来查寄存器与位域，不是用来生成头文件的。",
+        "addressOffset 是相对外设 baseAddress 的字节偏移；size 与 bitWidth 的单位是位（sizeUnit=bits）。",
+    ];
+}
 
 /** 去掉 XML 注释：SVD 里有些注释块里带尖括号，留着会干扰后续的标签匹配。 */
 function stripComments(text) {
@@ -272,11 +304,13 @@ function indentBlock(text, spaces) {
  * 一行一个寄存器是刻意的：--check 报差异时能指出「哪个外设的哪个寄存器变了」，
  * 而且 git diff 不会因为整表重排而炸开。
  */
-export function renderSvdF1(doc) {
+export function renderSvdDoc(doc) {
     const lines = [];
     lines.push("{");
-    lines.push('  "schema": 1,');
+    lines.push('  "schema": 2,');
     lines.push('  "family": "STM32F1",');
+    lines.push('  "line": ' + JSON.stringify(String(doc.line)) + ",");
+    lines.push('  "device": ' + JSON.stringify(doc.source?.file?.replace(/\.svd$/u, "") ?? "") + ",");
     lines.push('  "sizeUnit": "bits",');
     lines.push('  "addressUnitBits": ' + JSON.stringify(doc.addressUnitBits) + ",");
     lines.push('  "source": ' + indentBlock(JSON.stringify(doc.source, null, 2), 2) + ",");
@@ -305,16 +339,17 @@ export function renderSvdF1(doc) {
 }
 
 /**
- * 组装最终的 doc（不含渲染）：调用方决定 source 与 notes（ST SVD / 手写兜底两种）。
- * svdText 可以是 SVD 原文，也可以是手写子集那种「已经解析好的 peripherals」。
+ * 组装最终的 doc（不含渲染）：调用方决定 source 与 notes（都按 line 给）。
+ * svdText 可以是 SVD 原文，也可以是「已经解析好的 peripherals」（测试/离线诊断用）。
  */
-export function buildSvdF1(input) {
+export function buildSvdDoc(input) {
     const parsed = Array.isArray(input.peripherals)
         ? { deviceName: input.deviceName ?? "", deviceVersion: input.deviceVersion ?? "", addressUnitBits: input.addressUnitBits ?? 8, peripherals: input.peripherals }
         : parseSvd(input.svdText);
     return {
-        schema: 1,
+        schema: 2,
         family: "STM32F1",
+        line: String(input.line),
         sizeUnit: "bits",
         addressUnitBits: parsed.addressUnitBits,
         source: input.source,

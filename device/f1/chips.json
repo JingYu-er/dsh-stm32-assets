@@ -3,7 +3,7 @@
   "family": "STM32F1",
   "generatedBy": "scripts/build-assets.mjs",
   "source": "dsh-stm32 的 lib/data/stm32f1.js::resolveF1Chip + lib/engine/hal-chip.js::resolveHalChip",
-  "count": 12,
+  "count": 14,
   "notes": [
     "生成物，不要手改：改芯片表跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
     "代表型号策略：每条产品线的每个容量档挑一颗最常见型号，与 ioc/minimal、ld/f1 是同一批；没收录的型号（RAM 未收录等）见 manifest.json 的 skipped。",
@@ -26,6 +26,21 @@
       "deviceDefine": "STM32F100xB",
       "deviceHeader": "stm32f100xb.h",
       "linkerScript": "STM32F100C8Tx_FLASH.ld"
+    },
+    {
+      "cpn": "STM32F100CET6",
+      "line": "100",
+      "group": "xe",
+      "packageName": "LQFP48",
+      "pinCount": 48,
+      "flashBytes": 524288,
+      "ramBytes": 32768,
+      "deviceId": "STM32F100CETx",
+      "mcuName": "STM32F100CETx",
+      "startup": "startup_stm32f100xe.s",
+      "deviceDefine": "STM32F100xE",
+      "deviceHeader": "stm32f100xe.h",
+      "linkerScript": "STM32F100CETx_FLASH.ld"
     },
     {
       "cpn": "STM32F101C6T6",
@@ -56,6 +71,21 @@
       "deviceDefine": "STM32F101xB",
       "deviceHeader": "stm32f101xb.h",
       "linkerScript": "STM32F101C8Tx_FLASH.ld"
+    },
+    {
+      "cpn": "STM32F101CET6",
+      "line": "101",
+      "group": "xe",
+      "packageName": "LQFP48",
+      "pinCount": 48,
+      "flashBytes": 524288,
+      "ramBytes": 49152,
+      "deviceId": "STM32F101CETx",
+      "mcuName": "STM32F101CETx",
+      "startup": "startup_stm32f101xe.s",
+      "deviceDefine": "STM32F101xE",
+      "deviceHeader": "stm32f101xe.h",
+      "linkerScript": "STM32F101CETx_FLASH.ld"
     },
     {
       "cpn": "STM32F101CGT6",
