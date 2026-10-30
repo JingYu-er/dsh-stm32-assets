@@ -1,6 +1,6 @@
 {
   "name": "dsh-stm32-assets",
-  "version": "2026.10.30-2",
+  "version": "2026.10.31-1",
   "schema": 2,
   "generatedBy": "scripts/build-assets.mjs",
   "profiles": {
@@ -36,13 +36,15 @@
   "device": {
     "chips": {
       "path": "device/f1/chips.json",
-      "count": 14,
-      "source": "dsh-stm32 resolveF1Chip + resolveHalChip"
+      "count": 83,
+      "coverage": "F1 全部 CPN",
+      "source": "dsh-stm32 resolveF1Chip + resolveHalChip（CubeMX db/mcu 的 58 个分组按容量字母展开 + 14 个代表型号）"
     },
     "memory": {
       "path": "device/f1/memory.json",
-      "count": 14,
-      "source": "ld/f1 的 MEMORY 段"
+      "count": 83,
+      "coverage": "F1 全部 CPN",
+      "source": "chips.json 的 flashBytes / ramBytes（与 ld/f1 的 MEMORY 段对账）"
     },
     "svd": {
       "dir": "device/f1/svd/",
@@ -203,7 +205,53 @@
     "license": "Apache License 2.0（CMSIS Device 部分，Copyright ARM Limited - STMicroelectronics）",
     "source": "ST 官方固件包 Drivers/CMSIS/Device/ST/STM32F1xx/Include/*.h"
   },
-  "skipped": [],
+  "skipped": [
+    "STM32F100C4T6：STM32F100 没有 x6 这一容量档（上游真实档位：xb/xe）",
+    "STM32F100C6T6：STM32F100 没有 x6 这一容量档（上游真实档位：xb/xe）",
+    "STM32F100R4H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F100R4H6",
+    "STM32F100R4T6：STM32F100 没有 x6 这一容量档（上游真实档位：xb/xe）",
+    "STM32F100R6H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F100R6H6",
+    "STM32F100R6T6：STM32F100 没有 x6 这一容量档（上游真实档位：xb/xe）",
+    "STM32F100R8H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F100R8H6",
+    "STM32F100RBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F100RBH6",
+    "STM32F100RCT6：RAM 大小未收录：STM32F100C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100C 的 RAM 再建",
+    "STM32F100RDT6：RAM 大小未收录：STM32F100D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100D 的 RAM 再建",
+    "STM32F100VCT6：RAM 大小未收录：STM32F100C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100C 的 RAM 再建",
+    "STM32F100VDT6：RAM 大小未收录：STM32F100D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100D 的 RAM 再建",
+    "STM32F100ZCT6：RAM 大小未收录：STM32F100C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100C 的 RAM 再建",
+    "STM32F100ZDT6：RAM 大小未收录：STM32F100D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F100D 的 RAM 再建",
+    "STM32F101RBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F101RBH6",
+    "STM32F101RCT6：RAM 大小未收录：STM32F101C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101C 的 RAM 再建",
+    "STM32F101RDT6：RAM 大小未收录：STM32F101D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101D 的 RAM 再建",
+    "STM32F101VCT6：RAM 大小未收录：STM32F101C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101C 的 RAM 再建",
+    "STM32F101VDT6：RAM 大小未收录：STM32F101D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101D 的 RAM 再建",
+    "STM32F101ZCT6：RAM 大小未收录：STM32F101C（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101C 的 RAM 再建",
+    "STM32F101ZDT6：RAM 大小未收录：STM32F101D（用 CubeMX 的 db/mcu 确认后再补表）；链接脚本里的 RAM 大小不能猜：先按 CubeMX 的 db/mcu 补上 STM32F101D 的 RAM 再建",
+    "STM32F103R4H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103R4H6",
+    "STM32F103R6H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103R6H6",
+    "STM32F103R8H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103R8H6",
+    "STM32F103RBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103RBH6",
+    "STM32F103V8H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103V8H6",
+    "STM32F103VBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103VBH6",
+    "STM32F103VBI6：认不出封装后缀 I（期望 T/U/Y 之一）：STM32F103VBI6",
+    "STM32F103VCH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103VCH6",
+    "STM32F103VDH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103VDH6",
+    "STM32F103VEH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103VEH6",
+    "STM32F103ZCH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103ZCH6",
+    "STM32F103ZDH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103ZDH6",
+    "STM32F103ZEH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103ZEH6",
+    "STM32F103ZFH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103ZFH6",
+    "STM32F103ZGH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103ZGH6",
+    "STM32F105R8T6：STM32F105 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F105RBT6：STM32F105 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F105V8H6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F105V8H6",
+    "STM32F105V8T6：STM32F105 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F105VBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F105VBH6",
+    "STM32F105VBT6：STM32F105 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F107RBT6：STM32F107 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F107VBT6：STM32F107 没有 xb 这一容量档（上游真实档位：xc）",
+    "STM32F107VCH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F107VCH6"
+  ],
   "files": [
     {
       "path": "chipdb/f1/STM32F100C(4-6)Tx.xml",
@@ -613,16 +661,16 @@
     },
     {
       "path": "device/f1/chips.json",
-      "bytes": 6964,
-      "sha256": "f7634ee39c432537c769556b516a11e965df5dbdb5d7455148534ea1c8a30450",
-      "source": "dsh-stm32 resolveF1Chip + resolveHalChip（12 个代表型号）",
+      "bytes": 36947,
+      "sha256": "d28d4f46513ea2800f049cce655477934f31198c841d37c07bbd0410839e6eca",
+      "source": "dsh-stm32 resolveF1Chip + resolveHalChip（F1 全部 CPN：CubeMX db/mcu 分组展开 + 14 个代表型号）",
       "profile": "core"
     },
     {
       "path": "device/f1/memory.json",
-      "bytes": 5586,
-      "sha256": "539936146c024ebb987334d139bef2c7dfbe1db062bf666ddccd636561d1c534",
-      "source": "ld/f1 的 MEMORY 段（渲染后解析）",
+      "bytes": 35022,
+      "sha256": "3553cc3397891026f8e4b9a1b2e75ffa3cbbce64dbdb70343acfe9c6d1c845f6",
+      "source": "chips.json 的 flashBytes / ramBytes + ld/f1 的 MEMORY 段（生成时对账）",
       "profile": "core"
     },
     {
