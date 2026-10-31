@@ -3,13 +3,12 @@
  * dsh-stm32-assets 生成脚本：把「随包会变臃肿、但可以按需下载」的资产集中生成到这里。
  *
  * 分六类（manifest 的 profiles 分成 core / full 两层）：
- *   device/f1/   事实层：chips.json（F1 的全部 CPN）、memory.json（每颗 CPN 的 Flash/RAM 布局）、
+ *   device/f1/   事实层：chips.json（F1 的全部 CPN，Flash/RAM 就在里面）、
  *                svd/<line>.json（6 条产品线各一份：外设 → 寄存器 → 位域，来自 ST 官方 SVD）
  *   ioc/minimal/ F1 每种容量档的最小 .ioc（从 dsh-stm32 的模板渲染，不是从网上下载的）
  *   ld/f1/       每个容量档一份 <DeviceId>_FLASH.ld（MEMORY 按 Flash/RAM 渲染，共 14 份）
  *   startup/f1/  14 个 gcc 启动文件 startup_stm32f1*.s（从本机 CubeMX 固件包复制，离线兜底用）
  *   headers/f1/  16 个 CMSIS 设备头（14 个 stm32f1xx 设备头 + stm32f1xx.h + system_stm32f1xx.h）
- *   chipdb/f1/   CubeMX 的 db/mcu 里 F1 的 XML（引脚/复用/容量的事实源）
  *   diagrams/    Archify 架构图（不再进 npm 包，放这里分享）
  *
  * 用法：
@@ -27,14 +26,14 @@
  *      中途失败不会留下半套文件。
  *   3. 可离线：SVD 依次试 --svd / --svd-dir → .cache/svd/ → 下载并写缓存；都没有就**明确报错退 2**
  *      （v2026.10.30-2 起没有手写兜底了：半份 SVD 比没有更容易误导人）。startup / 设备头必须来自
- *      本机固件包，缺了同样报错退 2；chipdb / diagrams 的源目录不存在时沿用上次生成的文件，
+ *      本机固件包，缺了同样报错退 2；diagrams 的源目录不存在时沿用上次生成的文件，
  *      不让一台没装 CubeMX 的机器把资产删空。
  *
  * 产物是生成物，不要手改：改了下次 --check 就会红。
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
@@ -58,15 +57,16 @@ const assetsRoot = resolve(here, "..");
 
 /** manifest 的两层 profile：core 是建工程/烧录必需，full 再加上 CubeMX 的 db 与架构图。 */
 const PROFILE_CORE = ["device/**", "ioc/**", "ld/**"];
-const PROFILE_FULL = ["device/**", "ioc/**", "ld/**", "chipdb/**", "diagrams/**", "startup/**", "headers/**"];
+const PROFILE_FULL = ["device/**", "ioc/**", "ld/**", "diagrams/**", "startup/**", "headers/**"];
 
 /** 这些目录里的文件全部由本脚本托管：多出来的文件说明有残留，--check 要报出来。 */
-const MANAGED_DIRS = ["device", "ioc", "ld", "chipdb", "diagrams", "startup", "headers"];
+const MANAGED_DIRS = ["device", "ioc", "ld", "diagrams", "startup", "headers"];
 
 /** startup 与设备头来自本机 CubeMX 固件包：14 个 gcc 启动文件、16 个头。 */
 const DEFAULT_FIRMWARE_ROOT = "D:/app/STM32CubeMX/Repository/STM32Cube_FW_F1_V1.8.7";
 const FIRMWARE_CMSIS_DIR = "Drivers/CMSIS/Device/ST/STM32F1xx";
 const FIRMWARE_STARTUP_SUBDIR = "Source/Templates/gcc";
+const FIRMWARE_LINKER_SUBDIR = "Source/Templates/gcc/linker";
 const FIRMWARE_HEADER_SUBDIR = "Include";
 const STARTUP_COUNT = 14;
 const HEADER_COUNT = 16;
@@ -75,18 +75,6 @@ const FIRMWARE_LICENSE = "Apache License 2.0";
 
 /** 版本号写在仓库根的 VERSION 里（YYYY.MM.DD-N）：跑脚本不会改它，发布时才手动抬。 */
 const VERSION_PATTERN = /^\d{4}\.\d{2}\.\d{2}-\d+$/u;
-
-/**
- * 每个容量档挑一个常见型号当代表：ioc/minimal 与 ld/f1 只按容量档渲染（各 14 份），
- * 模板由 group 决定。chips.json / memory.json 覆盖的是全部 CPN，不止这 14 颗。
- */
-const REPRESENTATIVES = [
-    "STM32F100C8T6", "STM32F100CET6",
-    "STM32F101C6T6", "STM32F101C8T6", "STM32F101CET6", "STM32F101CGT6",
-    "STM32F102C6T6", "STM32F102C8T6",
-    "STM32F103C6T6", "STM32F103C8T6", "STM32F103VET6", "STM32F103VGT6",
-    "STM32F105VCT6", "STM32F107VCT6",
-];
 
 /**
  * CubeMX 的 db/mcu 里一个 XML 是「一条 line × 一个封装 × 一段容量字母」的分组，**不是一颗芯片**：
@@ -109,40 +97,114 @@ function parseMcuRef(name) {
     return { line: match[1], packageLetter: match[2], letters, suffix: match[5] };
 }
 
+/** 封装字母 → 引脚数（db 的 Package 属性 LQFP48/TFBGA64… 与之对得上）。 */
+const PIN_COUNT_BY_PACKAGE = { T: 36, C: 48, R: 64, V: 100, Z: 144 };
+
+/** 容量字母 → 容量档的兜底（line 没有「x + 字母」这一档时用；与插件 src/data/device-facts.ts 同源）。 */
+const GROUP_BY_LETTER = { "4": "x6", "6": "x6", "8": "xb", B: "xb", C: "xe", D: "xe", E: "xe", F: "xg", G: "xg" };
+
 /**
- * 枚举 F1 的候选 CPN：db/mcu 的每个分组按容量字母展开。
- * 返回的 unparsed 是文件名本身认不出的项（会写进 manifest.skipped，不静默丢掉）。
+ * 读 db/mcu 的分组：文件名给 line / 封装字母 / 容量字母 / 后缀，XML 给 RefName（Mcu.Name）、Package、<Flash>。
+ * 一 个 XML 不是一颗芯片，而是一条 line × 一个封装 × 一段容量字母（STM32F103R(C-D-E)Tx = RCT6/RDT6/RET6）。
  */
-function enumerateCpns(dir) {
-    const cpns = [];
-    const unparsed = [];
+function loadMcuFamilies(dir) {
+    const out = [];
     for (const name of readdirSync(dir).sort()) {
         if (!/\.xml$/iu.test(name) || !/^STM32F10/iu.test(name)) continue;
         const ref = parseMcuRef(name.slice(0, -4));
-        if (ref === null) {
-            unparsed.push(name + "：文件名认不出 CubeMX 的分组写法（STM32F1xx<封装>(<容量字母>)<后缀>x）");
-            continue;
-        }
-        for (const letter of ref.letters) {
-            cpns.push("STM32F1" + ref.line + ref.packageLetter + letter + ref.suffix + CPN_SUFFIX);
+        if (ref === null) continue;
+        const text = readFileSync(join(dir, name), "utf8");
+        const refName = /RefName="([^"]+)"/u.exec(text)?.[1] ?? name.slice(0, -4);
+        const packageName = /(?:^|\s)Package="([^"]+)"/u.exec(text)?.[1] ?? "";
+        const flashKb = [...text.matchAll(/<Flash>(\d+)<\/Flash>/gu)].map((match) => Number(match[1]));
+        const ramKb = Number.parseInt(/<Ram>(\d+)<\/Ram>/u.exec(text)?.[1] ?? "", 10);
+        // 文件名里的 "STM32F1" 那个 1 也属于 line：STM32F103C(8-B)Tx → line "103"（不是 "03"）。
+        const line = "1" + ref.line;
+        out.push({
+            refName,
+            packageName,
+            line,
+            prefix: "STM32F" + line,
+            packageLetter: ref.packageLetter,
+            suffixLetter: ref.suffix,
+            letters: ref.letters,
+            flashKb,
+            ramKb,
+        });
+    }
+    if (out.length === 0) fail("CubeMX 的 " + slashed(dir) + " 里没有 STM32F1 的分组 XML（CubeMX 没装全？）");
+    return out;
+}
+
+/**
+ * 固件包里的事实：每档的 RAM（官方 .ld 的 MEMORY）与「line → 有哪些容量档」（gcc 启动文件名）。
+ *
+ * group 这个字符串本来就是从 startup_stm32f1<line><group>.s 反推出来的，所以启动文件清单
+ * 就是容量档清单；两个来源必须一一对上，缺一个就报错（宁可不生成，也不写半份事实）。
+ */
+function loadFirmwareFacts(root) {
+    const cmsisRoot = join(root, FIRMWARE_CMSIS_DIR);
+    if (!existsSync(cmsisRoot)) {
+        fail(
+            "找不到本机 CubeMX 固件包的 CMSIS 目录：" + slashed(cmsisRoot) +
+            "（用 --firmware 指到 STM32Cube_FW_F1_Vx.y.z 根目录，或用环境变量 STM32CUBE_FW_F1_ROOT）",
+        );
+    }
+    const startupDir = join(cmsisRoot, FIRMWARE_STARTUP_SUBDIR);
+    const linkerDir = join(cmsisRoot, FIRMWARE_LINKER_SUBDIR);
+    const groupsByLine = new Map();
+    for (const name of readdirSync(startupDir).sort()) {
+        const match = /^startup_stm32f1(\d{2})(x[0-9a-z]{1,2})\.s$/iu.exec(name);
+        if (match === null) continue;
+        const line = "1" + match[1];
+        const group = match[2].toLowerCase();
+        const groups = groupsByLine.get(line) ?? new Set();
+        groups.add(group);
+        groupsByLine.set(line, groups);
+    }
+    const memoryByGroup = new Map();
+    for (const name of readdirSync(linkerDir).sort()) {
+        const match = /^STM32F1(\d{2})(X[0-9A-Z]{1,2})_FLASH\.ld$/iu.exec(name);
+        if (match === null) continue;
+        const [flashRegion, ramRegion] = parseLinkerMemory(readFileSync(join(linkerDir, name), "utf8"));
+        memoryByGroup.set("1" + match[1] + ":" + match[2].toLowerCase(), {
+            file: name,
+            flashBytes: flashRegion.sizeBytes,
+            ramBytes: ramRegion.sizeBytes,
+        });
+    }
+    for (const [line, groups] of groupsByLine) {
+        for (const group of groups) {
+            if (!memoryByGroup.has(line + ":" + group)) {
+                fail("固件包里没有 STM32F1" + line + group.toUpperCase() + "_FLASH.ld（" + slashed(linkerDir) + "）");
+            }
         }
     }
-    return { cpns, unparsed };
+    return { root, groupsByLine, memoryByGroup };
+}
+
+/** line + 容量字母 → 容量档：先认「x + 小写字母」，再退回全局表，都没有返回 null。 */
+function chooseGroup(line, letter, groupsByLine) {
+    const groups = groupsByLine.get(line);
+    if (groups === undefined) return null;
+    const direct = "x" + letter.toLowerCase();
+    if (groups.has(direct)) return direct;
+    const fallback = GROUP_BY_LETTER[letter.toUpperCase()];
+    return fallback !== undefined && groups.has(fallback) ? fallback : null;
 }
 
 /**
  * CPN 枚举的事实源：CubeMX 的 db/mcu。
- * 机器上没装 CubeMX 就退回仓库里的 chipdb/f1 —— 那是上次生成时复制过来的同一批文件，
- * 这样一台没装 CubeMX 的机器跑 --check 也不会把 chips.json 缩回一小撮。
+ * 仓库里不留 db 副本（那几个 XML 与 CubeMX 安装目录里的同一批文件重复），所以机器上没装 CubeMX 时
+ * 直接报错退 2，而不是退回到一份会过期的拷贝。
  */
 function cpnSourceDir(options) {
     const installed = join(cubeMxRootOf(options), "db/mcu");
     if (existsSync(installed)) return { dir: installed };
-    const bundled = join(assetsRoot, "chipdb/f1");
-    if (existsSync(bundled)) return { dir: bundled };
     return fail(
-        "找不到 F1 的 CubeMX MCU 数据库：" + slashed(installed) + " 与 " + slashed(bundled) + " 都不存在" +
-        "（用 --cube-mx 指到 CubeMX 安装根：chips.json 要从 db/mcu 的分组名枚举全部 CPN）",
+        "找不到 F1 的 CubeMX MCU 数据库：" + slashed(installed) + " 不存在" +
+        "（用 --cube-mx 指到 CubeMX 安装根：chips.json 要从 db/mcu 的分组名枚举全部 CPN；" +
+        "仓库里不再保留 chipdb 副本，避免与安装目录的 db 重复）",
     );
 }
 
@@ -456,16 +518,18 @@ const HELP = [
 async function run(options) {
     const version = resolveVersion(options);
 
-    // 1) 插件侧的事实源（只读；不写插件仓库任何文件）
+    // 1) 两个事实源 + 插件模板：
+    //    - CubeMX 的 db/mcu（谁存在、封装名、Flash）—— 随用户安装的 CubeMX 版本走，脚本只读不复制；
+    //    - ST 官方固件包（每个容量档的 RAM/启动文件/设备头）—— RAM 的权威值只在官方 .ld 里；
+    //    - 插件只给模板与渲染函数（renderIoc / renderLinkerScript 都是纯函数），不再贡献任何芯片表，
+    //      否则「生成 chips.json 要读 chips.json」会形成循环依赖（插件 8e107fd 删掉内置表后就断了）。
     const pluginRoot = options.pluginRoot;
-    const dataFile = join(pluginRoot, "lib/data/stm32f1.js");
     const halFile = join(pluginRoot, "lib/engine/hal-chip.js");
     const iocTemplateFile = join(pluginRoot, "templates/scaffold/demo.ioc");
     const ldTemplateFile = join(pluginRoot, "templates/scaffold/STM32F103XX_FLASH.ld");
-    for (const file of [dataFile, halFile, iocTemplateFile, ldTemplateFile]) {
+    for (const file of [halFile, iocTemplateFile, ldTemplateFile]) {
         if (!existsSync(file)) fail("找不到插件文件：" + slashed(file) + "（用 --plugin 指到 dsh-stm32 仓库根）");
     }
-    const F1 = await import(pathToFileURL(dataFile).href);
     const HAL = await import(pathToFileURL(halFile).href);
     const IOC_TEMPLATE = readFileSync(iocTemplateFile, "utf8");
     const LD_TEMPLATE = readFileSync(ldTemplateFile, "utf8");
@@ -473,39 +537,7 @@ async function run(options) {
     const { map: outputs, add } = createOutputs();
     const skipped = [];
     const chips = [];
-    const memoryDevices = [];
-    const ldTexts = new Map();
-
-    // 2) 14 个代表型号 → ioc/minimal + ld/f1（按容量档），随后 F1 全部 CPN → chips.json / memory.json
     const compareCodepoint = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
-
-    /**
-     * 一颗 CPN 的事实：两个解析器各算一遍，再逐字段对账。
-     * 不一致就是插件里两张表漂了，宁可不生成。
-     */
-    const resolveOne = (mcu) => {
-        const hal = HAL.resolveHalChip(mcu);
-        const resolved = F1.resolveF1Chip(mcu);
-        if (hal.facts === null || resolved.chip === null) {
-            // 两条路线都给了理由时留更短更具体的那条（HAL 的理由后面还会补一段用法提示，不适合塞进 skipped）。
-            const reasons = [hal.reason, resolved.reason].filter((reason) => typeof reason === "string" && reason !== "");
-            reasons.sort((a, b) => a.length - b.length);
-            return { reason: reasons.length > 0 ? reasons[0] : mcu + " 解析不出事实" };
-        }
-        const facts = hal.facts;
-        const chip = resolved.chip;
-        for (const key of ["startup", "deviceDefine", "deviceHeader", "flashBytes", "ramBytes", "pinCount"]) {
-            if (facts[key] !== chip[key]) {
-                fail(
-                    mcu + " 的 " + key + " 在 resolveHalChip（" + String(facts[key]) + "）与 resolveF1Chip（" +
-                    String(chip[key]) + "）里不一致：先修插件的芯片表",
-                );
-            }
-        }
-        const lineEntry = F1.F1_LINES.find((item) => mcu.startsWith(item.prefix));
-        if (lineEntry === undefined) fail("认不出 " + mcu + " 属于哪条 line（F1_LINES 里没有对应前缀）");
-        return { facts, chip, lineEntry };
-    };
 
     /** 解析不出来的型号写进 manifest.skipped（同一原因的同一行只留一条）。 */
     const skip = (what, reason) => {
@@ -513,34 +545,116 @@ async function run(options) {
         if (!skipped.includes(line)) skipped.push(line);
     };
 
-    /** F1 的内存只有 FLASH / RAM 两个固定区：两个尺寸就定死了 memory.json 的内容。 */
+    /** F1 的内存只有 FLASH / RAM 两个固定区：两个尺寸就定死了 .ld 里 MEMORY 段的内容。 */
     const memoryRegions = (flashBytes, ramBytes) => [
         { name: "FLASH", origin: "0x08000000", sizeBytes: flashBytes },
         { name: "RAM", origin: "0x20000000", sizeBytes: ramBytes },
     ];
 
-    const regionKey = (regions) =>
-        regions.map((region) => region.name + ":" + region.origin + ":" + region.sizeBytes).join("|");
+    // 2) db 出「有哪些型号」，固件包出「容量档 ↔ RAM / 启动文件 / 设备头」的对应关系
+    const cpnSource = cpnSourceDir(options);
+    const families = loadMcuFamilies(cpnSource.dir);
+    const firmware = loadFirmwareFacts(firmwareRootOf(options));
 
-    // 2a) 代表型号（每个容量档一颗）→ ioc/minimal + ld/f1
-    const ldByDevice = new Map(); // deviceId → { file, text, regions }：代表型号自己那份 .ld
-    for (const mcu of REPRESENTATIVES) {
-        const found = resolveOne(mcu);
+    /** db 的 58 个分组 → CPN 逐个展开（一个 XML 可能含 RCT6/RDT6/RET6 三颗）。 */
+    const cpnIndex = new Map(); // cpn → { family, letter }
+    for (const family of families) {
+        for (const letter of family.letters) {
+            cpnIndex.set(family.prefix + family.packageLetter + letter + family.suffixLetter + CPN_SUFFIX, { family, letter });
+        }
+    }
+
+    /**
+     * 一颗 CPN 的工程事实。缺任何一个来源就跳过这颗（不猜），原因进 manifest.skipped：
+     *   cpn / deviceId / mcuName     ← db/mcu 的文件名与 RefName
+     *   packageName / pinCount       ← db 的 Package 属性 + 封装字母表
+     *   flashBytes                   ← db 的 <Flash>（按分组内容量字母顺序一一对应）
+     *   ramBytes                     ← 分组内最小的容量字母取 db 的 <Ram>，其余取固件包该档官方 .ld 的 MEMORY
+     *   startup / deviceDefine / deviceHeader / linkerScript ← 命名规则（group 本身来自启动文件名）
+     */
+    const factsFor = (cpn) => {
+        const hit = cpnIndex.get(cpn);
+        if (hit === undefined) return { reason: "CubeMX 的 db/mcu 里没有这颗芯片（分组名展开不出来）" };
+        const { family, letter } = hit;
+        const group = chooseGroup(family.line, letter, firmware.groupsByLine);
+        if (group === null) {
+            const known = [...(firmware.groupsByLine.get(family.line) ?? [])].join("/");
+            return { reason: "F" + family.line + " 没有 x" + letter.toLowerCase() + " 这一容量档（固件包里的档位：" + known + "）" };
+        }
+        const index = family.letters.indexOf(letter);
+        const flashKb = family.flashKb.length === family.letters.length ? family.flashKb[index] : family.flashKb[0];
+        if (flashKb === undefined) return { reason: "db 的 " + family.refName + " 里没有 <Flash> 值" };
+        const memory = firmware.memoryByGroup.get(family.line + ":" + group);
+        if (memory === undefined) {
+            return { reason: "固件包里没有 STM32F1" + family.line + group.toUpperCase() + "_FLASH.ld（该档 RAM 没有权威来源）" };
+        }
+        // RAM 随容量字母变大：db 的 <Ram> 是分组里**最小**那个字母的值（F101 的 8-B 组给 10K，
+        // 而 8 就是 10K、B 是 16K），官方 .ld 给的是分组**最大**那个字母的值（16K）。
+        // 所以：分组里最小的字母用 db，其余（含单字母分组）用 .ld —— 两头都有权威来源，不用手写表。
+        const ramBytes = index === 0 && family.letters.length > 1 ? family.ramKb * 1024 : memory.ramBytes;
+        const pinCount = PIN_COUNT_BY_PACKAGE[family.packageLetter];
+        if (pinCount === undefined) {
+            return { reason: "封装字母 " + family.packageLetter + " 认不出引脚数（db 里是 " + family.packageName + "）" };
+        }
+        const deviceId = family.prefix + family.packageLetter + letter + family.suffixLetter + "x";
+        return {
+            family,
+            group,
+            facts: {
+                mcu: cpn,
+                deviceId,
+                mcuName: family.refName,
+                packageName: family.packageName,
+                pinCount,
+                startup: "startup_stm32f" + family.line + group + ".s",
+                deviceDefine: "STM32F" + family.line + "x" + group.slice(1).toUpperCase(),
+                deviceHeader: "stm32f" + family.line + group + ".h",
+                flashBytes: flashKb * 1024,
+                ramBytes,
+                linkerScript: deviceId + "_FLASH.ld",
+                keepLegacyLinkerScript: deviceId === "STM32F103C8Tx" && flashKb === 64 && ramBytes === 20 * 1024,
+                notes: [],
+            },
+        };
+    };
+
+    // 2) 全部 CPN 先算一遍事实；算不出来的（db 没收录、该 line 没这容量档、封装字母认不出）写进 skipped
+    const cpnList = [...cpnIndex.keys()].sort(compareCodepoint);
+    const resolved = [];
+    const namedByCpn = new Map();
+    const seenDeviceIds = new Set();
+    for (const cpn of cpnList) {
+        const found = factsFor(cpn);
         if (found.reason !== undefined) {
-            skip(mcu, found.reason);
+            skip(cpn, found.reason);
             continue;
         }
-        const { facts } = found;
+        const { facts, family, group } = found;
+        if (seenDeviceIds.has(facts.deviceId)) fail("两颗 CPN 解析出同一个 deviceId：" + facts.deviceId + "（" + cpn + "）");
+        seenDeviceIds.add(facts.deviceId);
+        namedByCpn.set(cpn, facts);
+        resolved.push({ cpn, facts, family, group });
+    }
+
+    // 2a) 每个「line + 容量档」挑一颗代表型号 → ioc/minimal + ld/f1（14 份，CPN 取字典序最小，产物才稳定）
+    const representativeIds = new Set();
+    const representativeOf = new Map(); // "line:group" → { cpn, facts }
+    for (const entry of resolved) {
+        const key = entry.family.line + ":" + entry.group;
+        if (!representativeOf.has(key)) representativeOf.set(key, entry);
+    }
+    for (const [key, entry] of [...representativeOf.entries()].sort((a, b) => compareCodepoint(a[0], b[0]))) {
+        const { facts } = entry;
+        representativeIds.add(facts.deviceId);
         add(
             "ioc/minimal/" + facts.deviceId + ".ioc",
             HAL.renderIoc(IOC_TEMPLATE, facts),
-            "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, " + mcu + ")",
+            "renderIoc(dsh-stm32 templates/scaffold/demo.ioc, " + facts.mcu + ")",
             "core",
         );
-
         const ldText = HAL.renderLinkerScript(LD_TEMPLATE, facts);
-        add("ld/f1/" + facts.linkerScript, ldText, "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, " + mcu + ")", "core");
-        // memory.json 的数值与这份 .ld 同源：先解析 MEMORY，再自校验等于芯片表的 Flash/RAM。
+        add("ld/f1/" + facts.linkerScript, ldText, "renderLinkerScript(templates/scaffold/STM32F103XX_FLASH.ld, " + facts.mcu + ")", "core");
+        // 渲染出来的 .ld 再解析回来，逐项对账：MEMORY 必须同时等于 db 的 Flash 与固件包该档的 RAM。
         const regions = parseLinkerMemory(ldText);
         for (const expected of memoryRegions(facts.flashBytes, facts.ramBytes)) {
             const actual = regions.find((region) => region.name === expected.name);
@@ -548,73 +662,28 @@ async function run(options) {
                 fail(
                     facts.deviceId + " 的 .ld MEMORY 里 " + expected.name + "=" +
                     (actual === undefined ? "（缺）" : actual.origin + "/" + actual.sizeBytes) +
-                    "，但芯片表写 " + expected.origin + "/" + expected.sizeBytes,
+                    "，但 db / 固件包写 " + expected.origin + "/" + expected.sizeBytes + "（" + key + "）",
                 );
             }
         }
-        ldByDevice.set(facts.deviceId, { file: facts.linkerScript, text: ldText, regions });
     }
 
-    // 2b) F1 的全部 CPN → chips.json / memory.json
-    //     ioc/minimal 与 ld/f1 仍是按容量档的 14 份（模板由 group / 尺寸决定），多出来的 CPN 复用同一套。
-    const cpnSource = cpnSourceDir(options);
-    const enumerated = enumerateCpns(cpnSource.dir);
-    for (const line of enumerated.unparsed) skipped.push(line);
-    const cpnList = [...new Set([...enumerated.cpns, ...REPRESENTATIVES])].sort(compareCodepoint);
-
-    /**
-     * Flash/RAM 完全相同的 CPN 共用一份 .ld：MEMORY 段只由这两个数决定
-     * （渲染出来的 .ld 里唯一的型号差异是文件头注释那行 "Linker script for <DeviceId> series"，
-     *  MEMORY 与各段内容不受影响）。取文件名字典序最小的一份，产物才稳定。
-     */
-    const ldByRegions = new Map();
-    for (const entry of [...ldByDevice.values()].sort((a, b) => compareCodepoint(a.file, b.file))) {
-        const key = regionKey(entry.regions);
-        if (!ldByRegions.has(key)) ldByRegions.set(key, entry);
-    }
-
-    const seenDeviceIds = new Set();
-    for (const cpn of cpnList) {
-        const found = resolveOne(cpn);
-        if (found.reason !== undefined) {
-            skip(cpn, found.reason);
-            continue;
-        }
-        const { facts, chip, lineEntry } = found;
-        if (seenDeviceIds.has(facts.deviceId)) fail("两颗 CPN 解析出同一个 deviceId：" + facts.deviceId + "（" + cpn + "）");
-        seenDeviceIds.add(facts.deviceId);
-
+    // 2b) F1 的全部 CPN → chips.json
+    for (const { facts, family, group } of resolved) {
         chips.push({
             cpn: facts.mcu,
-            line: lineEntry.code,
-            group: chip.group,
+            line: family.line,
+            group,
             packageName: facts.packageName,
             pinCount: facts.pinCount,
             flashBytes: facts.flashBytes,
             ramBytes: facts.ramBytes,
             deviceId: facts.deviceId,
             mcuName: facts.mcuName,
-            startup: facts.startup,
-            deviceDefine: facts.deviceDefine,
-            deviceHeader: facts.deviceHeader,
-            linkerScript: facts.linkerScript,
-        });
-
-        const regions = memoryRegions(facts.flashBytes, facts.ramBytes);
-        // 只有尺寸与某份随包 .ld 逐项相同的 CPN 才挂得上去（ld/f1 不按 CPN 渲染，按容量档）。
-        const reusable = ldByDevice.get(facts.deviceId) ?? ldByRegions.get(regionKey(regions));
-        memoryDevices.push({
-            deviceId: facts.deviceId,
-            cpn: facts.mcu,
-            line: lineEntry.code,
-            group: chip.group,
-            linkerScript: reusable === undefined ? null : "ld/f1/" + reusable.file,
-            regions,
         });
     }
 
     chips.sort((a, b) => compareCodepoint(a.cpn, b.cpn));
-    memoryDevices.sort((a, b) => compareCodepoint(a.deviceId, b.deviceId));
 
     add(
         "device/f1/chips.json",
@@ -622,42 +691,19 @@ async function run(options) {
             schema: 1,
             family: "STM32F1",
             generatedBy: "scripts/build-assets.mjs",
-            source: "dsh-stm32 的 lib/data/stm32f1.js::resolveF1Chip + lib/engine/hal-chip.js::resolveHalChip",
+            source: "CubeMX db/mcu（型号/封装/Flash）+ ST 官方固件包（每档 RAM、启动文件、设备头）",
             count: chips.length,
             notes: [
-                "生成物，不要手改：改芯片表跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
-                "覆盖范围：F1 的全部 CPN —— CubeMX db/mcu 的 58 个分组按容量字母范围展开（一个 XML 可能含 RCT6/RDT6/RET6 三颗），再并上 14 个代表型号（每个容量档一颗，ioc/minimal 与 ld/f1 就是这 14 份）；解析不出来的型号（封装 H/I、RAM 未收录、该 line 没这个容量档）见 manifest.json 的 skipped。",
-                "ioc/minimal 与 ld/f1 按容量档各 14 份：多出来的 CPN 按 group 复用同一份 .ioc 模板，按 Flash/RAM 尺寸复用同一份 .ld。",
+                "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
+                "只写 db 与固件包能算出来的 9 个字段：启动文件 / 设备宏 / 设备头 / 链接脚本名由插件按 line+group 现算（规则见 dsh-stm32 src/data/device-facts.ts 的 namingFrom）。",
+                "覆盖范围：F1 的全部 CPN —— CubeMX db/mcu 的 58 个分组按容量字母范围展开（一个 XML 可能含 RCT6/RDT6/RET6 三颗），再并上 14 个代表型号（每个容量档一颗，ioc/minimal 与 ld/f1 就是这 14 份）；展开不出来或 RAM 没权威来源的型号见 manifest.json 的 skipped。",
                 "flashBytes / ramBytes 是字节数（不是 KiB）；pinCount 是封装总引脚数（HAL 的 pinCount），不是可用 IO 数。",
-                "startup / deviceDefine / deviceHeader 与插件 resolveF1Chip 逐字段一致，脚本生成时会逐项对账，对不上就拒绝生成。",
+                "flashBytes 取自 db 的 <Flash>（按分组内容量字母顺序），ramBytes 取自固件包该容量档官方 .ld 的 MEMORY；分组里最小的容量字母取 db 的 <Ram>（官方 .ld 给的是分组最大字母的值，直接套会高估 4/6 档）。",
                 "mcuName 是写进 .ioc 的 Mcu.Name（CubeMX 的分组名，例如 STM32F103C(8-B)Tx），不一定等于 deviceId。",
             ],
             chips,
         }),
-        "dsh-stm32 resolveF1Chip + resolveHalChip（F1 全部 CPN：CubeMX db/mcu 分组展开 + 14 个代表型号）",
-        "core",
-    );
-
-    add(
-        "device/f1/memory.json",
-        renderJson({
-            schema: 1,
-            family: "STM32F1",
-            sizeUnit: "bytes",
-            generatedBy: "scripts/build-assets.mjs",
-            source: "chips.json 的 flashBytes / ramBytes（同一次生成解析出来的同一份数；代表型号的 .ld MEMORY 会逐项对账）",
-            count: memoryDevices.length,
-            notes: [
-                "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
-                "origin 是十六进制字符串、补足 8 位（0x08000000 / 0x20000000）；sizeBytes 是字节数。",
-                "regions 固定按 FLASH、RAM 两区给出；顺序与 .ld 里的书写顺序无关。",
-                "sizeBytes 就是 chips.json 的 flashBytes / ramBytes；生成时代表型号的 .ld MEMORY 会逐项对账，对不上就拒绝生成。",
-                "每条带 cpn / line / group：line 用来找 device/f1/svd/<line>.json，group 用来复用 ioc/minimal 里的模板。",
-                "linkerScript 指向随包的 ld/f1/<文件>：只有那份 .ld 的 MEMORY 与这颗芯片逐项相同时才给，否则为 null（ld/f1 按容量档 14 份，不按 CPN 渲染）。",
-            ],
-            devices: memoryDevices,
-        }),
-        "chips.json 的 flashBytes / ramBytes + ld/f1 的 MEMORY 段（生成时对账）",
+        "CubeMX db/mcu + ST 官方固件包（F1 全部 CPN：db 分组展开 + 14 个代表型号）",
         "core",
     );
 
@@ -726,35 +772,18 @@ async function run(options) {
             "full",
         );
     }
-    // 交叉校验：chips.json 每颗芯片指名的启动文件与设备头，必须都在刚复制的这批文件里
-    for (const chip of chips) {
-        for (const [rel, what] of [["startup/f1/" + chip.startup, "启动文件"], ["headers/f1/" + chip.deviceHeader, "设备头"]]) {
-            if (!outputs.has(rel)) fail(chip.cpn + " 指名的" + what + " " + rel + " 不在固件包里（" + FIRMWARE_CMSIS_DIR + "）");
+    // 交叉校验：每颗芯片现算出来的启动文件与设备头，必须都在刚复制的这批文件里。
+    // 链接脚本只有 14 个代表型号那份（ld/f1 按容量档发布），别的 CPN 由插件建工程时现渲染 <DeviceId>_FLASH.ld。
+    for (const [cpn, facts] of namedByCpn) {
+        for (const [rel, what] of [
+            ["startup/f1/" + facts.startup, "启动文件"],
+            ["headers/f1/" + facts.deviceHeader, "设备头"],
+        ]) {
+            if (!outputs.has(rel)) fail(cpn + " 指名的" + what + " " + rel + " 不在固件包里（" + FIRMWARE_CMSIS_DIR + "）");
         }
-    }
-
-    // 5) CubeMX 的 F1 db XML：源目录不在就沿用上次生成的文件（不删空）
-    const dbDir = join(cubeMxRootOf(options), "db/mcu");
-    let chipdbCount = 0;
-    if (existsSync(dbDir)) {
-        const names = readdirSync(dbDir).sort();
-        for (const name of names) {
-            if (!/^STM32F10.*\.xml$/iu.test(name)) continue;
-            const bytes = readFileSync(join(dbDir, name));
-            add("chipdb/f1/" + name, bytes, "CubeMX db/mcu/" + name + "（ST 官方 MCU 数据库，随 CubeMX 分发）", "full");
-            chipdbCount += 1;
+        if (representativeIds.has(facts.deviceId) && !outputs.has("ld/f1/" + facts.linkerScript)) {
+            fail(cpn + " 指名的链接脚本 ld/f1/" + facts.linkerScript + " 没生成");
         }
-        if (chipdbCount === 0) console.warn("⚠ " + slashed(dbDir) + " 里没有 STM32F10*.xml（CubeMX 没装全？）");
-    } else {
-        const previous = readPreviousManifest();
-        const reused = (previous?.files ?? []).filter((entry) => typeof entry.path === "string" && entry.path.startsWith("chipdb/"));
-        for (const entry of reused) {
-            const abs = join(assetsRoot, entry.path);
-            if (!existsSync(abs)) continue;
-            add(entry.path, readFileSync(abs), entry.source ?? "CubeMX db/mcu（沿用上次生成结果）", "full");
-            chipdbCount += 1;
-        }
-        console.log("· chipdb：" + slashed(dbDir) + " 不存在，沿用已有 " + chipdbCount + " 个文件");
     }
 
     // 6) 架构图：同上，源目录不在就沿用
@@ -793,7 +822,6 @@ async function run(options) {
         device: files.filter((entry) => entry.path.startsWith("device/")).length,
         ioc: files.filter((entry) => entry.path.startsWith("ioc/")).length,
         ld: files.filter((entry) => entry.path.startsWith("ld/")).length,
-        chipdb: files.filter((entry) => entry.path.startsWith("chipdb/")).length,
         diagrams: files.filter((entry) => entry.path.startsWith("diagrams/")).length,
         svd: files.filter((entry) => entry.path.startsWith("device/f1/svd/")).length,
         startup: files.filter((entry) => entry.path.startsWith("startup/")).length,
@@ -816,12 +844,6 @@ async function run(options) {
                 coverage: "F1 全部 CPN",
                 source: "dsh-stm32 resolveF1Chip + resolveHalChip（CubeMX db/mcu 的 " +
                     "58 个分组按容量字母展开 + 14 个代表型号）",
-            },
-            memory: {
-                path: "device/f1/memory.json",
-                count: memoryDevices.length,
-                coverage: "F1 全部 CPN",
-                source: "chips.json 的 flashBytes / ramBytes（与 ld/f1 的 MEMORY 段对账）",
             },
             svd: {
                 dir: "device/f1/svd/",
@@ -867,6 +889,17 @@ async function run(options) {
             if (before !== null && before.equals(output.bytes)) continue;
             writeFileSync(abs, output.bytes);
         }
+        // 顺手清掉「生成结果里没有」的残留：代表型号改名后旧文件会变成孤儿，不清的话 --check 一直红。
+        // 只动 MANAGED_DIRS（脚本托管的目录），删掉的都是生成物，git 里能找回。
+        let pruned = 0;
+        for (const dir of MANAGED_DIRS) {
+            for (const rel of listFiles(join(assetsRoot, dir), dir)) {
+                if (outputs.has(rel)) continue;
+                unlinkSync(join(assetsRoot, rel));
+                pruned += 1;
+            }
+        }
+        if (pruned > 0) console.log("· 清掉 " + pruned + " 个残留文件（生成结果里没有它们）");
     } else {
         for (const [rel, output] of outputs) {
             const abs = join(assetsRoot, rel);
@@ -897,14 +930,14 @@ async function run(options) {
         profileCounts.full + "），另加 manifest.json 与 VERSION 共 " + outputs.size + " 个文件，共 " + totalBytes + " 字节（" +
         (totalBytes / 1024 / 1024).toFixed(2) + " MB）";
     console.log(
-        "device/f1：chips " + chips.length + " 颗（F1 全部 CPN，CubeMX db/mcu 分组展开 + 代表型号）、memory " +
-        memoryDevices.length + " 颗、" + "svd " + svdLines.length + " 条 line（" + svdTotals.peripherals + " 外设 / " +
+        "device/f1：chips " + chips.length + " 颗（F1 全部 CPN，CubeMX db/mcu 分组展开 + 代表型号）、" +
+        "svd " + svdLines.length + " 条 line（" + svdTotals.peripherals + " 外设 / " +
         svdTotals.registers + " 寄存器 / " + svdTotals.fields + " 位域）",
     );
     console.log(
         "ioc/minimal：" + counts.ioc + " 个；ld/f1：" + counts.ld + " 个；svd：" + counts.svd + " 条；" +
         "startup/f1：" + counts.startup + " 个；headers/f1：" + counts.headers + " 个；" +
-        "chipdb/f1：" + counts.chipdb + " 个；diagrams：" + counts.diagrams + " 个",
+        "diagrams：" + counts.diagrams + " 个",
     );
     if (skipped.length > 0) {
         console.log("跳过 " + skipped.length + " 个型号（写进 manifest.skipped，带原因）：");

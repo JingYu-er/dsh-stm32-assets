@@ -1,12 +1,16 @@
 # dsh-stm32-assets
 
 [`dsh-stm32`](../dsh-stm32) 插件的**配套资源仓库**：放那些「有用、但塞进 npm 包会变臃肿」的东西——
-最小 .ioc、按芯片渲染的链接脚本、CubeMX 的 MCU 数据库、启动文件与设备头、架构图，以及 stage A 加进来的**设备事实层**。
+最小 .ioc、按芯片渲染的链接脚本、启动文件与设备头、架构图，以及插件按需下载的**设备事实层**。
 
 插件按 manifest 里的 profile 决定下载哪一层：
 
-- **core = 建工程必需**：`device/f1` 的 `chips.json` / `memory.json`，加 `ioc/minimal` 与 `ld/f1`。
-- **full = core 再加**：`device/f1/svd/`、`chipdb/f1`、`startup/f1`、`headers/f1`、`diagrams`。
+- **core = 建工程必需**：`device/f1/chips.json`，加 `ioc/minimal` 与 `ld/f1`（29 个文件 ≈ 197 KiB）。
+- **full = core 再加**：`device/f1/svd/`、`startup/f1`、`headers/f1`、`diagrams`（69 个文件，SVD 占大头）。
+
+`chipdb/` 与 `device/f1/memory.json` 已在 v2026.10.31-2 删掉：前者是 CubeMX 安装目录 `db/mcu` 的副本
+（插件现在直接读用户本机那份，见 `dsh-stm32` 的 `src/engine/cubemx-db.ts`），后者每个字段都由
+`chips.json` 的 `flashBytes`/`ramBytes` 派生。**资源仓库不放重复事实。**
 
 `core` 是 `full` 的子集（manifest 的 `profileCounts` 直接给出两层的文件数）。
 
@@ -14,14 +18,12 @@
 
 | 路径 | 内容 | manifest profile |
 | --- | --- | --- |
-| `device/f1/chips.json` | 设备事实表：**F1 全部 CPN**（83 颗可解析型号；容量/启动文件/设备宏/链接脚本……） | core |
-| `device/f1/memory.json` | 同一批 CPN 的 Flash/RAM 布局（`sizeBytes` 与 chips.json 逐条同源） | core |
+| `device/f1/chips.json` | 设备事实表：**F1 全部 CPN**（111 颗；只放 db 与固件包能算出来的 9 个字段） | core |
 | `device/f1/svd/<line>.json` | 6 条产品线各一份：外设 → 寄存器 → 位域（`100`/`101`/`102`/`103`/`105`/`107`） | full |
 | `ioc/minimal/` | 每条产品线各容量档的最小 .ioc（14 份，**按容量档而非按 CPN**） | core |
 | `ld/f1/` | 每个容量档一份 `<DeviceId>_FLASH.ld`（14 份，MEMORY 按 Flash/RAM 渲染；**不按 CPN 展开**） | core |
 | `startup/f1/` | 14 个 gcc 启动文件 `startup_stm32f1*.s`（从 CubeMX 固件包复制，离线兜底用） | full |
 | `headers/f1/` | 16 个 CMSIS 设备头（14 个 `stm32f1*.h` 设备头 + `stm32f1xx.h` + `system_stm32f1xx.h`） | full |
-| `chipdb/f1/` | CubeMX `db/mcu` 里 F1 的 XML（58 份，引脚/复用/容量的事实源，也是 `chips.json` 的 CPN 来源） | full |
 | `diagrams/` | Archify 架构图（html + png，共 4 份） | full |
 | `scripts/` | 生成脚本（不是资产，不在 manifest 里） | — |
 | `manifest.json` | 资产清单 v2：版本、profiles、每个文件的 sha256 | — |
@@ -36,70 +38,52 @@
 ### chips.json —— F1 全部 CPN
 
 `chips[]` 每条是一颗**可解析的完整订货号**（CPN），按 `cpn` 码点排序；顶层 `count` 等于条数。
-v2026.10.31-1 起这里覆盖 F1 全部 CPN（83 颗）——不再是「每条产品线的每个容量档挑一颗」的代表型号表。
+v2026.10.31-2 起覆盖 F1 全部 CPN（111 颗），**只写 db 与固件包能算出来的 9 个字段**。
 
 字段（每条一颗芯片）：
 
-| 字段 | 含义 |
-| --- | --- |
-| `cpn` | 完整订货号（如 `STM32F103RBT6`；CubeMX 分组展开 ∪ 14 个代表型号，见下） |
-| `line` | 产品线编号（`100` / `101` / `102` / `103` / `105` / `107`） |
-| `group` | 容量档（`x6` / `xb` / `xe` / `xg` / `xc`） |
-| `packageName` | 封装（`LQFP48` 这类，由封装后缀 + 引脚数拼出） |
-| `pinCount` | 封装总引脚数（**不是**可用 IO 数） |
-| `flashBytes` / `ramBytes` | 字节数（不是 KiB） |
-| `deviceId` | CMSIS 设备名（`STM32F103C8Tx`） |
-| `mcuName` | 写进 .ioc 的 `Mcu.Name`（CubeMX 分组名，如 `STM32F103C(8-B)Tx`；不一定等于 deviceId） |
-| `startup` | 上游启动文件名（`startup_stm32f103xb.s`，对应本仓库 `startup/f1/` 里那份） |
-| `deviceDefine` | 编译器设备宏（`STM32F103xB`） |
-| `deviceHeader` | CMSIS 设备头（`stm32f103xb.h`，对应 `headers/f1/` 里那份） |
-| `linkerScript` | 这颗芯片该用的链接脚本名（`<deviceId>_FLASH.ld`，插件按事实自己渲染；**不一定**在随包的 `ld/f1/` 里，那份只收 14 个容量档） |
+| 字段 | 含义 | 从哪来 |
+| --- | --- | --- |
+| `cpn` | 完整订货号（如 `STM32F103RBT6`） | db/mcu 文件名展开 + 14 个代表型号 |
+| `line` | 产品线编号（`100` / `101` / `102` / `103` / `105` / `107`） | db/mcu 文件名 |
+| `group` | 容量档（`x6` / `xb` / `xe` / `xg` / `xc`） | 固件包的启动文件名（下面有规则） |
+| `packageName` | 封装（`LQFP48` 这类） | db 的 `<Mcu Package="…">` |
+| `pinCount` | 封装总引脚数（**不是**可用 IO 数） | 封装字母表 T36/C48/R64/V100/Z144 |
+| `flashBytes` / `ramBytes` | 字节数（不是 KiB） | db 的 `<Flash>` / 官方 .ld 的 MEMORY |
+| `deviceId` | CMSIS 设备名（`STM32F103C8Tx`） | 型号名 = `STM32F1<line><封装><容量><后缀>x` |
+| `mcuName` | 写进 .ioc 的 `Mcu.Name`（CubeMX 分组名，如 `STM32F103C(8-B)Tx`；不一定等于 deviceId） | db 的 `<Mcu RefName="…">` |
 
-来源：插件仓库 `lib/data/stm32f1.js` 的 `resolveF1Chip`（启动文件/设备宏/Flash/RAM）
-与 `lib/engine/hal-chip.js` 的 `resolveHalChip`（deviceId/mcuName/封装/链接脚本）。
+**另外四样名字不在文件里，由插件现算**（`dsh-stm32` 的 `src/data/device-facts.ts: namingFrom`）：
+`startup` = `startup_stm32f<line><group>.s`、`deviceDefine` = `STM32F<line>x<group 末字母大写>`、
+`deviceHeader` = `stm32f<line><group>.h`、`linkerScript` = `<deviceId>_FLASH.ld`。
+规则不是猜的：`group` 本身就是从固件包 `startup_stm32f<line><group>.s` 的文件名反推出来的，
+所以 group 合法时这四个名字唯一；改名字规则要同时改这两处（生成脚本与插件）。
 
-CPN 怎么来的：
+来源只有两个，都在用户本机，脚本不复制任何一份进仓库：
 
-1. 读 CubeMX `db/mcu` 下 F1 的 58 个 XML（`--cube-mx`，取不到就退回仓库里的 `chipdb/f1/`）。
-   文件名本身就是一个分组：`STM32F103R(8-B)Tx.xml` = 103 线 × R 封装 × {8, B} 两档，
-   `STM32F105R(8-B-C)Tx.xml` 同理给出三档。
-2. 把括号里的容量字母逐个展开成候选 CPN（`STM32F103R(8-B)Tx` → `STM32F103R8T6` / `STM32F103RBT6`），
-   58 个分组（53 个含多个容量字母）共 **125 颗候选**。
-3. 逐颗交给上面两个解析器：125 颗里 **80 颗**解析成功，另外 45 颗**不进** `chips.json`，
-   而是写进 `manifest.json` 的 `skipped` 并带原因——封装后缀是 `H`（BGA）/`I`（`resolveHalChip` 只认 T/U/Y）、
-   RAM 没收录（`STM32F100C/D`、`STM32F101C/D`）、该 line 上游确实没有这个容量档
-   （`STM32F100` 只有 xb/xe，`STM32F105`/`STM32F107` 只有 xc）。
-4. 再并上 14 个代表型号（每个容量档一颗，`ioc/minimal` 与 `ld/f1` 就是这 14 份）：
-   其中 `STM32F100CET6` / `STM32F101CET6` / `STM32F101CGT6` 三颗在 CubeMX 分组里查不到
-   （插件按容量字母兜出来的 deviceId），靠这一步补进来。80 + 3 = **83 颗**。
+1. **CubeMX 的 db/mcu**（`--cube-mx`，默认 `D:/app/STM32CubeMX`）：谁存在、封装名、每档 Flash。
+   文件名本身就是分组：`STM32F103R(C-D-E)Tx.xml` = 103 线 × R 封装 × {C, D, E} 三档。
+2. **ST 官方固件包**（`--firmware`）：每个容量档的 RAM 与启动文件/设备头清单
+   （`…/Source/Templates/gcc/startup_*.s` 与 `…/gcc/linker/STM32F1XX_FLASH.ld`）。
+
+CPN 怎么来的：db 的 58 个分组按容量字母展开（一个 XML 可能含 RCT6/RDT6/RET6 三颗），
+再用固件包的容量档清单筛掉「这条 line 上游没有这个档」的组合（`F100` 只有 xb/xe、
+`F105`/`F107` 只有 xc）。筛掉的 14 颗写进 `manifest.json` 的 `skipped` 并带原因。
+
+**RAM 为什么不能直接用 db 的 `<Ram>`**：它是分组里**最小**那个容量字母的值（`F101` 的 8-B 组给 10K，
+而 B 其实是 16K）；官方 `.ld` 给的是分组**最大**字母的值。所以规则是
+「分组里最小的字母取 db、其余取官方 .ld」——两头都有权威来源，脚本里不用手写值表。
+唯一的例外是 `F103xC`（256K Flash / 48K RAM）与 `F103xD`（384K / 64K）：官方 .ld 只到 XE 档，
+D 与 XE 相同、C 比 XE 小，这类同组中间字母由 .ld 值兜住。
+
+生成时脚本会**对账**，任何一项对不上就拒绝生成：
+
+1. 每个代表型号（每个容量档一颗）渲染出来的 `.ld` 再解析回来，MEMORY 必须等于 db 的 Flash 与固件包该档的 RAM；
+2. 每颗芯片现算的 `startup` 与 `deviceHeader` 必须真的在 `startup/f1/`、`headers/f1/` 里；
+   代表型号的 `ld/f1/<linkerScript>` 必须真的生成（其余 CPN 由插件自己渲染 .ld，不要求随包）。
 
 **`ioc/minimal` 与 `ld/f1` 仍是 14 份，按容量档而非按 CPN**：多出来的 CPN 按 `group` 复用同一份 .ioc 模板，
-按 Flash/RAM 尺寸复用同一份 .ld（见 memory.json 的 `linkerScript`）。
-
-生成时脚本会**逐字段对账**，任何一项对不上就拒绝生成：
-
-1. 两个解析器给出的 `startup` / `deviceDefine` / `deviceHeader` / `flashBytes` / `ramBytes` 必须一致（否则插件的两张表漂了）；
-2. 14 个代表型号的 `ramBytes` / `flashBytes` 必须等于刚渲染出来的那份 `.ld` 的 MEMORY（其余 CPN 没有成品脚本，不参与这项对账）；
-3. 每颗芯片的 `startup` 与 `deviceHeader` 必须真的在 `startup/f1/`、`headers/f1/` 里（交叉校验，见下文）。
-
-v2026.10.30-2 起 14 个代表型号全部收录；v2026.10.31-1 起覆盖范围从代表型号扩到 F1 全部 CPN，
-`skipped` 也首次非空（45 条，全是「上游没有这个容量档 / 插件 RAM 表未收录 / 封装字母不支持」这类真原因，
-不是生成失败）。要让某颗 CPN 进表，只需要 CubeMX `db/mcu` 里有对应分组，重跑脚本即可。
-
-### memory.json —— Flash/RAM 布局
-
-`devices[]` 每条：`deviceId`、`cpn`、`line`、`group`、`linkerScript`（随包 .ld 的 assets 相对路径，或 `null`）、
-`regions`（固定 FLASH、RAM 两个区：`{ name, origin, sizeBytes }`）。条数与 chips.json 一致（83）。
-
-- `origin` 是十六进制字符串、补足 8 位：`0x08000000` / `0x20000000`。
-- `sizeBytes` 是字节数，`sizeUnit` 写着 `bytes`，取值就是 chips.json 的 `flashBytes` / `ramBytes`
-  （同一次生成算出来的同一份数，不是另抄一遍）。
-- 14 个代表型号额外对账：脚本先把那份 `.ld` 渲染成文本，再从 MEMORY 段解析（LENGTH 的 `K`/`M` 换算成字节），
-  解析值必须等于 `sizeBytes`，对不上拒绝生成。
-- `linkerScript` 只在「随包的某份 `.ld` 的 MEMORY 与这颗芯片完全相同」时才给路径，否则 `null`：
-  `ld/f1` 按容量档 14 份，83 颗 CPN 里有 46 颗的 Flash/RAM 正好与其中一份相同
-  （如 `STM32F105RCT6` 与 `STM32F105VCTx_FLASH.ld` 都是 256K/64K），另外 37 颗（如 `STM32F103RBT6` = 128K/20K）
-  没有对应的成品脚本，由插件按事实自己渲染 `.ld`。
+按 Flash/RAM 尺寸复用同一份 .ld。代表型号取「该 line+档里 cpn 字典序最小的一颗」，产物才稳定。
 
 ### svd/<line>.json —— 外设 / 寄存器 / 位域（6 条产品线各一份）
 
@@ -202,7 +186,7 @@ node scripts/build-assets.mjs --svd-dir <dir>    # 6 个 SVD 都在这个目录�
   固件包缺文件）不会留下半套文件。
 - **不静默降级**：取不到 SVD、找不到固件包都**直接退 2**，绝不写半份资产。
 
-`--check` 还会扫 `device/`、`ioc/`、`ld/`、`chipdb/`、`diagrams/`、`startup/`、`headers/`
+`--check` 还会扫 `device/`、`ioc/`、`ld/`、`diagrams/`、`startup/`、`headers/`
 里**多出来的文件**（生成结果里没有的）——残留会让下载端拿到不在 manifest 里的东西。
 
 ### 数据来源与降级
@@ -211,8 +195,7 @@ node scripts/build-assets.mjs --svd-dir <dir>    # 6 个 SVD 都在这个目录�
 | --- | --- | --- |
 | `device/f1/svd/<line>.json` | `--svd` / `--svd-dir` → `.cache/svd/<file>` → 按固定 URL 下载并写入缓存 | **退 2**，报出缺哪条 line 与三种补法 |
 | `startup/f1/`、`headers/f1/` | 本机固件包（`--firmware` / `STM32CUBE_FW_F1_ROOT` / 默认路径） | **退 2** |
-| `ioc/`、`ld/`、`chips.json`、`memory.json` | 插件仓库的 `lib/`（`--plugin`）+ CubeMX `db/mcu` 的 XML 名（`--cube-mx`，缺则用 `chipdb/f1/`） | **退 2**（`db/mcu` 也缺时退回仓库里的 `chipdb/f1/`，两处都没有才退） |
-| `chipdb/f1/` | CubeMX 的 `db/mcu`（`--cube-mx`） | 沿用仓库里已有的文件，不删空 |
+| `ioc/`、`ld/`、`chips.json` | 插件仓库的模板与渲染函数（`--plugin`）+ CubeMX `db/mcu` 的 XML（`--cube-mx`）+ 固件包（`--firmware`） | **退 2**（仓库里不再留 db 副本，没装 CubeMX 就没法生成） |
 | `diagrams/` | 插件仓库的 `docs/diagrams` | 沿用仓库里已有的文件，不删空 |
 
 **v2026.10.30-2 起删掉了两级旧兜底**：「沿用上次生成的 `svd-f1.json`」与「手写子集」
@@ -231,13 +214,12 @@ node scripts/build-assets.mjs --svd-dir <dir>    # 6 个 SVD 都在这个目录�
   "generatedBy": "scripts/build-assets.mjs",
   "profiles": {
     "core": ["device/**", "ioc/**", "ld/**"],
-    "full": ["device/**", "ioc/**", "ld/**", "chipdb/**", "diagrams/**", "startup/**", "headers/**"]
+    "full": ["device/**", "ioc/**", "ld/**", "diagrams/**", "startup/**", "headers/**"]
   },
-  "profileCounts": { "core": 30, "full": 128 },
-  "counts": { "device": 8, "ioc": 14, "ld": 14, "chipdb": 58, "diagrams": 4, "svd": 6, "startup": 14, "headers": 16 },
+  "profileCounts": { "core": 29, "full": 69 },
+  "counts": { "device": 7, "ioc": 14, "ld": 14, "diagrams": 4, "svd": 6, "startup": 14, "headers": 16 },
   "device": {
-    "chips": { "path": "device/f1/chips.json", "count": 83, "coverage": "F1 全部 CPN", "source": "..." },
-    "memory": { "path": "device/f1/memory.json", "count": 83, "coverage": "F1 全部 CPN", "source": "..." },
+    "chips": { "path": "device/f1/chips.json", "count": 111, "coverage": "F1 全部 CPN", "source": "..." },
     "svd": {
       "dir": "device/f1/svd/", "count": 6, "kind": "st-svd",
       "counts": { "peripherals": 266, "registers": 3703, "fields": 27881 },
@@ -252,7 +234,7 @@ node scripts/build-assets.mjs --svd-dir <dir>    # 6 个 SVD 都在这个目录�
     "STM32F103RBH6：认不出封装后缀 H（期望 T/U/Y 之一）：STM32F103RBH6"
   ],
   "files": [
-    { "path": "device/f1/chips.json", "bytes": 36947, "sha256": "...", "source": "...", "profile": "core" }
+    { "path": "device/f1/chips.json", "bytes": 30776, "sha256": "...", "source": "...", "profile": "core" }
   ]
 }
 ```
@@ -278,12 +260,12 @@ node scripts/build-assets.mjs --svd-dir <dir>    # 6 个 SVD 都在这个目录�
 | --- | --- |
 | 2026.10.30-1 | manifest v2；device 事实层（chips / memory / svd-f1.json）；ioc 12 / ld 12 |
 | 2026.10.30-2 | SVD 拆成 6 条 line（`device/f1/svd/<line>.json`，删 `svd-f1.json`）；新增 `startup/f1`（14）与 `headers/f1`（16）；ioc/ld 补到 14（F100xE/F101xE 的 RAM 补齐）；删手写 SVD 兜底 |
-| 2026.10.31-1 | `chips.json` / `memory.json` 从 14 个代表型号扩到 **F1 全部 CPN（83 条）**：CubeMX `db/mcu` 的 58 个分组按容量字母展开 + 14 个代表型号并集；`skipped` 首次非空（45 条带原因）；ioc/ld 仍是 14 份（按容量档，不按 CPN）；新增 `coverage` 字段 |
+| 2026.10.31-1 | `chips.json` / `memory.json` 从 14 个代表型号扩到 **F1 全部 CPN（83 条）**：CubeMX `db/mcu` 的 58 个分组按容量字母展开 + 14 个代表型号并集；`skipped` 首次非空（45 条带原因）；ioc/ld 仍是 14 份（按容量档，按 CPN 复用）；新增 `coverage` 字段 |
+| 2026.10.31-2 | **删重复**：`chipdb/`（58 个 XML，与 CubeMX 安装目录重复）与 `device/f1/memory.json`（字段全由 chips.json 派生）；`chips.json` 精简到 9 个字段（startup/deviceDefine/deviceHeader/linkerScript 由插件现算），覆盖 111 颗 CPN（db 分组展开 ∪ 代表型号，`skipped` 14 条）；生成脚本改为只吃 CubeMX db + 固件包（不再 import 插件的芯片表，消除循环依赖），代表型号自动推导，写模式会清掉孤儿文件 → core 29 个文件 ≈ 197 KiB（chips.json 30.8 KiB）、full 69 个 |
 
 ## 许可与来源
 
 - 本仓库的脚本（`scripts/*.mjs`）是插件的一部分，按插件的约定使用。
-- `chipdb/f1/` 来自 ST 的 CubeMX `db/mcu`（随 CubeMX 分发，见 ST 的许可条款）。
 - `startup/f1/`、`headers/f1/` 来自 ST 的 STM32Cube_FW_F1_V1.8.7，CMSIS Device 部分 **Apache License 2.0**
   （Copyright ARM Limited - STMicroelectronics）。
 - `device/f1/svd/<line>.json` 是 ST SVD 的派生表示，见上文 ST EULA v1.0。
