@@ -416,6 +416,7 @@ function svdEntryFromText(text, line, origin) {
         deviceName: parsed.deviceName,
         deviceVersion: parsed.deviceVersion,
         addressUnitBits: parsed.addressUnitBits,
+        interrupts: parsed.interrupts ?? [],
     });
     const counts = svdCounts(doc.peripherals);
     if (counts.peripherals === 0) fail(file + " 解析出 0 个外设（来源：" + origin + "）");

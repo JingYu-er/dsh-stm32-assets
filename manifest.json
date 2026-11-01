@@ -1,6 +1,6 @@
 {
   "name": "dsh-stm32-assets",
-  "version": "2026.10.31-2",
+  "version": "2026.11.01-1",
   "schema": 2,
   "generatedBy": "scripts/build-assets.mjs",
   "profiles": {
@@ -223,43 +223,43 @@
     },
     {
       "path": "device/f1/svd/100.json",
-      "bytes": 223078,
-      "sha256": "9debf7b32fc263fd302c66d8fba855b1406c74c1b26c2e128fc8527f0bdca273",
+      "bytes": 225540,
+      "sha256": "269f35f419ac434693510a713ba57c465ddc5138ac49754c48cc5ca66c9c25f6",
       "source": "ST SVD STM32F100xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },
     {
       "path": "device/f1/svd/101.json",
-      "bytes": 214415,
-      "sha256": "03d1e4c9a3cffbf3fe9fb19b4d0c812758125ac5fd1acd5042422985904e0136",
+      "bytes": 216244,
+      "sha256": "021c0534bd5a8f87c988e7aa3fa9171f1fdad7a59203416c4f8699902b58f13a",
       "source": "ST SVD STM32F101xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },
     {
       "path": "device/f1/svd/102.json",
-      "bytes": 121523,
-      "sha256": "31628c6c271b7aabe676f6947c1607a28ab2e71406eb24dd637bb4c9c7aeafcd",
+      "bytes": 122946,
+      "sha256": "48e3826ce5a26cf1a601c17a35749e2fdbab9884ace73f905bdf0763bab5e4bf",
       "source": "ST SVD STM32F102xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },
     {
       "path": "device/f1/svd/103.json",
-      "bytes": 319901,
-      "sha256": "55b7f316aa27a4f8a9b6b19758be69b2d59f4f2320f84bcdfd34390e8406b49e",
+      "bytes": 322552,
+      "sha256": "4a5c27f84b355e163995f02bab53866e6616b537b6f2910e57e7bc29f6ae5833",
       "source": "ST SVD STM32F103xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },
     {
       "path": "device/f1/svd/105.json",
-      "bytes": 450864,
-      "sha256": "236729a8443c098c3365309a47eb0d476f1912f789fb1df0a4665a9f024a69ee",
+      "bytes": 453407,
+      "sha256": "81d1fd23ddd8afbd1db0db193f52f4f89759635b28c98c1f606399fae4f28782",
       "source": "ST SVD STM32F105xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },
     {
       "path": "device/f1/svd/107.json",
-      "bytes": 465678,
-      "sha256": "dc59a056adc3e401b61b821fd29f1a3b5d8b7bc659af7eb8a21e4699fb10f8aa",
+      "bytes": 468261,
+      "sha256": "d162dee521ec0cb644da5d749c157e62bebb4322fdf8bfa32bd62244f2c4611b",
       "source": "ST SVD STM32F107xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
     },

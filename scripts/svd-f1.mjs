@@ -251,7 +251,15 @@ export function parseSvd(rawText) {
         list.push({ name, baseAddress, derivedFrom: attrOf(peripheral.attrs, "derivedFrom"), registers });
     }
     if (list.length === 0) throw new Error("SVD 里一个外设都没解析出来（文件不对？）");
-    return { deviceName, deviceVersion, addressUnitBits, peripherals: resolvePeripheralDerivation(list) };
+    // 中断表：ARM SVD 里是顶层 <interrupt><name/><value/></interrupt>，R20 规则要它。
+    const interrupts = blocks(raw, "interrupt")
+        .map((item) => {
+            const name = tagText(item.body, "name");
+            const value = numberOf(tagText(item.body, "value"));
+            return name === null || value === null ? null : { name, value };
+        })
+        .filter((item) => item !== null);
+    return { deviceName, deviceVersion, addressUnitBits, interrupts, peripherals: resolvePeripheralDerivation(list) };
 }
 
 /** 输出前把内部字段（derivedFrom）摘掉，只留消费方该看到的。 */
@@ -316,6 +324,16 @@ export function renderSvdDoc(doc) {
     lines.push('  "source": ' + indentBlock(JSON.stringify(doc.source, null, 2), 2) + ",");
     lines.push('  "notes": ' + indentBlock(JSON.stringify(doc.notes, null, 2), 2) + ",");
     lines.push('  "counts": ' + inlineJson(svdCounts(doc.peripherals)) + ",");
+    const interrupts = doc.interrupts ?? [];
+    if (interrupts.length === 0) {
+        lines.push('  "interrupts": [],');
+    } else {
+        lines.push('  "interrupts": [');
+        interrupts.forEach((item, index) => {
+            lines.push("    " + inlineJson(item) + (index === interrupts.length - 1 ? "" : ","));
+        });
+        lines.push("  ],");
+    }
     lines.push('  "peripherals": [');
     doc.peripherals.forEach((peripheral, index) => {
         lines.push("    {");
@@ -344,7 +362,7 @@ export function renderSvdDoc(doc) {
  */
 export function buildSvdDoc(input) {
     const parsed = Array.isArray(input.peripherals)
-        ? { deviceName: input.deviceName ?? "", deviceVersion: input.deviceVersion ?? "", addressUnitBits: input.addressUnitBits ?? 8, peripherals: input.peripherals }
+        ? { deviceName: input.deviceName ?? "", deviceVersion: input.deviceVersion ?? "", addressUnitBits: input.addressUnitBits ?? 8, peripherals: input.peripherals, interrupts: input.interrupts ?? [] }
         : parseSvd(input.svdText);
     return {
         schema: 2,
@@ -352,6 +370,7 @@ export function buildSvdDoc(input) {
         line: String(input.line),
         sizeUnit: "bits",
         addressUnitBits: parsed.addressUnitBits,
+        interrupts: parsed.interrupts ?? [],
         source: input.source,
         notes: input.notes,
         peripherals: parsed.peripherals.map(sanitizePeripheral),
