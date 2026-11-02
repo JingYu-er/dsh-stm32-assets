@@ -51,6 +51,7 @@ import {
     svdNotes,
     svdSource,
 } from "./svd-f1.mjs";
+import { collectFamilyChips, findFirmwareRoot, normalizeFamilyIoc } from "./family-assets.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const assetsRoot = resolve(here, "..");
@@ -224,6 +225,10 @@ function parseArgs(argv) {
         firmwareRoot: "",
         svdPaths: [],
         svdDir: "",
+        // F1 以外还要生成哪些族（F1 走上面的专用管线，字节已校准）：按 CPN 的前两位分组（L4 含 L4+）。
+        families: ["C0", "F0", "F2", "F3", "F4", "F7", "G0", "G4", "L0", "L1", "L4", "U0"],
+        // 每族一份 CubeMX 认证过的最小 .ioc（跑 CubeMX 无头 config load+save 生成，见 docs）。
+        familyTemplates: resolve(assetsRoot, "templates/family"),
     };
     for (let index = 2; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -256,10 +261,16 @@ function parseArgs(argv) {
             case "--firmware":
                 options.firmwareRoot = resolve(next());
                 break;
+            case "--families":
+                options.families = next().split(",").map((item) => item.trim().toUpperCase()).filter((item) => item !== "");
+                break;
+            case "--family-templates":
+                options.familyTemplates = resolve(next());
+                break;
             default:
                 fail(
                     "不认识的参数：" + arg +
-                    "（可用：--check / --plugin <dir> / --cube-mx <dir> / --firmware <dir> / --svd <file> / --svd-dir <dir> / --help）",
+                    "（可用：--check / --plugin <dir> / --cube-mx <dir> / --firmware <dir> / --families <C0,F4,…> / --family-templates <dir> / --svd <file> / --svd-dir <dir> / --help）",
                 );
         }
     }
@@ -708,6 +719,70 @@ async function run(options) {
         "core",
     );
 
+    // 2c) F1 之外的族：device/<fam>/chips.json + ioc/family/<FAM>.ioc
+    //     同一套事实源（CubeMX db/mcu + 该族固件包）；本机缺固件包/模板的族写进 skipped，不猜。
+    const repositoryDir = join(cubeMxRootOf(options), "Repository");
+    const familySections = [];
+    for (const familyId of options.families) {
+        if (familyId === "F1") continue;
+        const templateFile = join(options.familyTemplates, familyId + ".ioc");
+        if (!existsSync(templateFile)) {
+            skip("族 " + familyId, "没有模板 " + slashed(templateFile) + "（先用 CubeMX 生成一次该族的最小 .ioc）");
+            continue;
+        }
+        const firmware = findFirmwareRoot(repositoryDir, familyId);
+        if (firmware === null) {
+            skip("族 " + familyId, "CubeMX 的 Repository 里没有 STM32Cube_FW_" + familyId + "_V* 固件包（装了之后重跑）");
+            continue;
+        }
+        const cmsisRoot = join(firmware.dir, "Drivers/CMSIS/Device/ST/STM32" + familyId + "xx");
+        if (!existsSync(cmsisRoot)) {
+            skip("族 " + familyId, "固件包结构不对：缺 " + slashed(cmsisRoot));
+            continue;
+        }
+        const collected = collectFamilyChips({ mcuDir: cpnSource.dir, cmsisRoot, family: familyId });
+        for (const item of collected.skipped) skip(item.what, item.reason);
+        if (collected.chips.length === 0) {
+            skip("族 " + familyId, "一颗 CPN 都算不出来（db 或固件包不全）");
+            continue;
+        }
+        const chipsRel = "device/" + familyId.toLowerCase() + "/chips.json";
+        add(
+            chipsRel,
+            renderJson({
+                schema: 1,
+                family: "STM32" + familyId,
+                generatedBy: "scripts/build-assets.mjs",
+                source: "CubeMX db/mcu（型号/封装/Flash/Ram）+ ST 官方固件包 " + firmware.name + "（启动文件/设备头）",
+                count: collected.chips.length,
+                notes: [
+                    "生成物，不要手改：改数据跑 node scripts/build-assets.mjs（--check 只校验不写盘）。",
+                    "只写 db 与固件包能算出来的 9 个字段：启动文件 / 设备宏 / 设备头 / 链接脚本名由插件按 line+group 现算（规则见 dsh-stm32 src/data/device-facts.ts 的 namingFrom 与 assets scripts/family-assets.mjs 的 namingOf，两边必须逐字一致）。",
+                    "ramBytes 取 db 的 <Ram>：该族官方固件包不带 gcc 链接脚本，没有第二个权威来源；分组跨多个容量字母时这是最小档的值（偏保守）。",
+                    "flashBytes 取 db 的 <Flash>（按分组内容量字母顺序一一对应）；pinCount 取 db 的 Package 属性里的数字（封装总引脚数）。",
+                    "group 从该族固件包的启动文件名反推（startup_stm32g431xx.s → xx），不按族级假设。",
+                ],
+                chips: collected.chips,
+            }),
+            "CubeMX db/mcu + " + firmware.name + "（" + familyId + " 全部 CPN）",
+            "core",
+        );
+        add(
+            "ioc/family/" + familyId + ".ioc",
+            normalizeFamilyIoc(readFileSync(templateFile, "utf8")),
+            "CubeMX 6.15 无头 config load+save 认证过的 " + familyId + " 最小工程模板（源：templates/family/" + familyId + ".ioc）",
+            "core",
+        );
+        familySections.push({
+            family: "STM32" + familyId,
+            chips: chipsRel,
+            count: collected.chips.length,
+            ioc: "ioc/family/" + familyId + ".ioc",
+            package: firmware.name,
+        });
+        console.log("· " + familyId + "：chips " + collected.chips.length + " 颗（" + firmware.name + "）");
+    }
+
     // 3) SVD → device/f1/svd/<line>.json：F1 的 6 条产品线各一份，每份只覆盖自己那条 line
     const explicitSvd = explicitSvdFiles(options);
     const svdLines = [];
@@ -839,6 +914,7 @@ async function run(options) {
         profileCounts,
         counts,
         device: {
+            families: familySections,
             chips: {
                 path: "device/f1/chips.json",
                 count: chips.length,

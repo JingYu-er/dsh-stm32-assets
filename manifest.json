@@ -19,12 +19,12 @@
     ]
   },
   "profileCounts": {
-    "core": 29,
-    "full": 69
+    "core": 39,
+    "full": 79
   },
   "counts": {
-    "device": 7,
-    "ioc": 14,
+    "device": 12,
+    "ioc": 19,
     "ld": 14,
     "diagrams": 4,
     "svd": 6,
@@ -32,6 +32,43 @@
     "headers": 16
   },
   "device": {
+    "families": [
+      {
+        "family": "STM32C0",
+        "chips": "device/c0/chips.json",
+        "count": 78,
+        "ioc": "ioc/family/C0.ioc",
+        "package": "STM32Cube_FW_C0_V1.4.1"
+      },
+      {
+        "family": "STM32F0",
+        "chips": "device/f0/chips.json",
+        "count": 111,
+        "ioc": "ioc/family/F0.ioc",
+        "package": "STM32Cube_FW_F0_V1.11.6"
+      },
+      {
+        "family": "STM32F4",
+        "chips": "device/f4/chips.json",
+        "count": 209,
+        "ioc": "ioc/family/F4.ioc",
+        "package": "STM32Cube_FW_F4_V1.28.3"
+      },
+      {
+        "family": "STM32G4",
+        "chips": "device/g4/chips.json",
+        "count": 168,
+        "ioc": "ioc/family/G4.ioc",
+        "package": "STM32Cube_FW_G4_V1.6.2"
+      },
+      {
+        "family": "STM32L0",
+        "chips": "device/l0/chips.json",
+        "count": 177,
+        "ioc": "ioc/family/L0.ioc",
+        "package": "STM32Cube_FW_L0_V1.12.4"
+      }
+    ],
     "chips": {
       "path": "device/f1/chips.json",
       "count": 111,
@@ -211,9 +248,32 @@
     "STM32F105VBH6：F105 没有 xb 这一容量档（固件包里的档位：xc）",
     "STM32F105VBT6：F105 没有 xb 这一容量档（固件包里的档位：xc）",
     "STM32F107RBT6：F107 没有 xb 这一容量档（固件包里的档位：xc）",
-    "STM32F107VBT6：F107 没有 xb 这一容量档（固件包里的档位：xc）"
+    "STM32F107VBT6：F107 没有 xb 这一容量档（固件包里的档位：xc）",
+    "STM32G4A1CETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1CEUx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1KEUx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1MESx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1METx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1REIx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1RETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1REYx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
+    "STM32G4A1VETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位"
   ],
   "files": [
+    {
+      "path": "device/c0/chips.json",
+      "bytes": 30675,
+      "sha256": "25f02690b8be542e3b74f4960eb333afa945bbd5cf8f2297715954cadc27da8b",
+      "source": "CubeMX db/mcu + STM32Cube_FW_C0_V1.4.1（C0 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/f0/chips.json",
+      "bytes": 43140,
+      "sha256": "9ee1eed4594a4b726f53b3c8bf5449dc17047832ced6915ccc0e7b993b6a129e",
+      "source": "CubeMX db/mcu + STM32Cube_FW_F0_V1.11.6（F0 全部 CPN）",
+      "profile": "core"
+    },
     {
       "path": "device/f1/chips.json",
       "bytes": 30776,
@@ -262,6 +322,27 @@
       "sha256": "d162dee521ec0cb644da5d749c157e62bebb4322fdf8bfa32bd62244f2c4611b",
       "source": "ST SVD STM32F107xx.svd → 精简事实表（见文件内 source 字段）",
       "profile": "full"
+    },
+    {
+      "path": "device/f4/chips.json",
+      "bytes": 81407,
+      "sha256": "2a5fe7c7e4cd691486961e2ce3e784495c943e7b173bd1e11ec1271782b8779c",
+      "source": "CubeMX db/mcu + STM32Cube_FW_F4_V1.28.3（F4 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/g4/chips.json",
+      "bytes": 65299,
+      "sha256": "fa4855101a079b2c3c5f370443da7515cbf868cb396d3decc169625ce17d1d4f",
+      "source": "CubeMX db/mcu + STM32Cube_FW_G4_V1.6.2（G4 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/l0/chips.json",
+      "bytes": 68386,
+      "sha256": "2fb1701557ec81c66eadf9938c0fd6d499b5f948154e0f5651944bafa103ccec",
+      "source": "CubeMX db/mcu + STM32Cube_FW_L0_V1.12.4（L0 全部 CPN）",
+      "profile": "core"
     },
     {
       "path": "diagrams/dsh-stm32-architecture.html",
@@ -402,6 +483,41 @@
       "sha256": "a54dfbb3480c672f532d472a6e84bcf34df6551771d2e9966c5a3503c676b6ab",
       "source": "ST 官方固件包 STM32Cube_FW_F1_V1.8.7 / Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h（CMSIS 设备头，Apache License 2.0）",
       "profile": "full"
+    },
+    {
+      "path": "ioc/family/C0.ioc",
+      "bytes": 2932,
+      "sha256": "dfe1e936b29837a046bf4998c05b8e4fed18e85edf748a7e4f5863e75efcc1b2",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 C0 最小工程模板（源：templates/family/C0.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/F0.ioc",
+      "bytes": 2141,
+      "sha256": "e1352626fe781aec11bd48d03428729c258d0f0d510a086e29265c8464ce2951",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 F0 最小工程模板（源：templates/family/F0.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/F4.ioc",
+      "bytes": 3314,
+      "sha256": "f8ebf8976f52cc1e86991b67c92d11d914f481eeaaf49facba0b55de359a8edb",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 F4 最小工程模板（源：templates/family/F4.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/G4.ioc",
+      "bytes": 4176,
+      "sha256": "2754514db5411cb3ce91e7a8f6dc8353438f1de2b24c0bc9345ccd23bcfd253b",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 G4 最小工程模板（源：templates/family/G4.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/L0.ioc",
+      "bytes": 3011,
+      "sha256": "bd45f88afd58035f0e8e46f44be82aca1fee4d0f197291c60fce27057ea03c6a",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 L0 最小工程模板（源：templates/family/L0.ioc）",
+      "profile": "core"
     },
     {
       "path": "ioc/minimal/STM32F100C8Tx.ioc",
