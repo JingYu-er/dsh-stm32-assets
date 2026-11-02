@@ -13,7 +13,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 /** db/mcu 的文件名：STM32F103C(8-B)Tx / STM32G431C(6-B)Tx / STM32F030C8Tx → line / 封装 / 容量字母。 */
 const MCU_FILE_PATTERN = /^STM32([A-Z])([0-9A-Z]{3})([A-Z])(?:\(([0-9A-Z]+(?:-[0-9A-Z]+)*)\)|([0-9A-Z]))([A-Z])x\.xml$/u;
@@ -52,15 +52,21 @@ function compareVersion(a, b) {
 
 /** 在 CubeMX 的 Repository 里找某族已装的最新固件包目录（没有返回 null，不猜）。 */
 export function findFirmwareRoot(repositoryDir, family) {
-    if (!existsSync(repositoryDir)) return null;
+    // 两处都找：CubeMX 官方 Repository，以及插件 stm32_firmware_install 自己组装的 dsh-firmware
+    // （与 Repository 并列）。只认 Repository 会把"插件刚装好的包"当成没装。
+    const dirs = [repositoryDir, join(dirname(repositoryDir), "dsh-firmware")].filter((dir) => existsSync(dir));
     const wanted = new RegExp("^STM32Cube_FW_" + family + "_V(\\d+\\.\\d+\\.\\d+)$", "u");
     let best = null;
-    for (const name of readdirSync(repositoryDir)) {
-        const match = wanted.exec(name);
-        if (match === null) continue;
-        if (best === null || compareVersion(match[1], best.version) > 0) best = { name, version: match[1] };
+    for (const dir of dirs) {
+        for (const name of readdirSync(dir)) {
+            const match = wanted.exec(name);
+            if (match === null) continue;
+            if (best === null || compareVersion(match[1], best.version) > 0) {
+                best = { name, version: match[1], dir };
+            }
+        }
     }
-    return best === null ? null : { dir: join(repositoryDir, best.name), version: best.version, name: best.name };
+    return best === null ? null : { dir: join(best.dir, best.name), version: best.version, name: best.name };
 }
 
 /** db/mcu 里属于某族的全部分组（一个 XML = 一条 line × 一个封装 × 一段容量字母）。 */
