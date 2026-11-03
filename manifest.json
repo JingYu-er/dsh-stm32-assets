@@ -726,8 +726,8 @@
     },
     {
       "path": "ioc/family/G0.ioc",
-      "bytes": 3154,
-      "sha256": "510187f4ee16e000a37c898d0a55898aebfde44895bd782084e0c38138efbb89",
+      "bytes": 3166,
+      "sha256": "d0068ffec2c10b987ae2b5f03b6d62830f8edd5f4a7f422548122a089d9f9066",
       "source": "CubeMX 6.15 无头 config load+save 认证过的 G0 最小工程模板（源：templates/family/G0.ioc）",
       "profile": "core"
     },
@@ -754,8 +754,8 @@
     },
     {
       "path": "ioc/family/U0.ioc",
-      "bytes": 3705,
-      "sha256": "50ff88e748a63ca17dec1933d59964cf0af7647549af7e4af2802102e0515f29",
+      "bytes": 3806,
+      "sha256": "6e9b56299c3d9b3c10bff356972285f2216cd501d557250166ad13fdb71e8d56",
       "source": "CubeMX 6.15 无头 config load+save 认证过的 U0 最小工程模板（源：templates/family/U0.ioc）",
       "profile": "core"
     },
