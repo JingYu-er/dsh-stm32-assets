@@ -16,10 +16,12 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 /** db/mcu 的文件名：STM32F103C(8-B)Tx / STM32G431C(6-B)Tx / STM32F030C8Tx → line / 封装 / 容量字母。 */
-const MCU_FILE_PATTERN = /^STM32([A-Z])([0-9A-Z]{3})([A-Z])(?:\(([0-9A-Z]+(?:-[0-9A-Z]+)*)\)|([0-9A-Z]))([A-Z])x\.xml$/u;
+// line 允许 4 位：WBA 的 line 是 BA50（startup_stm32wba50xx.s），3 位会把它拆成 BA5 + 封装 0。
+const MCU_FILE_PATTERN = /^STM32([A-Z])([0-9A-Z]{3,4})([A-Z])(?:\(([0-9A-Z]+(?:-[0-9A-Z]+)*)\)|([0-9A-Z]))([A-Z])x\.xml$/u;
 
 /** 固件包的启动文件：startup_stm32f103xb.s / startup_stm32g431xx.s → letter + line + group。 */
-const STARTUP_PATTERN = /^startup_stm32([a-z])([0-9a-z]{3})((?:x[0-9a-z])|(?:[0-9a-z]x))\.s$/u;
+// WB 的启动文件带内核后缀（startup_stm32wb10xx_cm4.s）：双核族只建 M4 应用核，后缀要保留在名字里。
+const STARTUP_PATTERN = /^startup_stm32([a-z])([0-9a-z]{3,4})((?:x[0-9a-z])|(?:[0-9a-z]x))(_cm[0-9])?\.s$/u;
 
 /** 容量字母的大小序（数字在前、字母在后）：判断「x6 覆盖 4/6、xb 覆盖 7..B」这种分段。 */
 function letterRank(letter) {
@@ -76,8 +78,13 @@ export function loadMcuGroups(mcuDir, family) {
         const match = MCU_FILE_PATTERN.exec(name);
         if (match === null) continue;
         const line = match[2];
-        if (match[1] + line.charAt(0) !== family) continue;
         const text = readFileSync(join(mcuDir, name), "utf8");
+        // 族归属以 XML 的 Family 属性为准：文件名反推的「首字母 + line 首字符」只是近似，
+        // L4+（STM32L4P5A(G-E)Ix → L + 4P5 → L4）与 WB/WB0（STM32WB05KZVx → W + B05 → WB）都会被它判错。
+        // 属性缺失或对不上时才退回旧启发式，保证没有 Family 属性的老 db 仍按原样工作。
+        const xmlFamily = /\bFamily="([^"]+)"/u.exec(text)?.[1] ?? "";
+        const familyMatched = xmlFamily !== "" ? xmlFamily === "STM32" + family : match[1] + line.charAt(0) === family;
+        if (!familyMatched) continue;
         groups.push({
             refName: /RefName="([^"]+)"/u.exec(text)?.[1] ?? name.slice(0, -4),
             packageName: /(?:^|\s)Package="([^"]+)"/u.exec(text)?.[1] ?? "",
@@ -114,7 +121,9 @@ export function loadStartupGroups(cmsisRoot) {
  * 三条都不是就返回 null（宁可跳过这颗，也不瞎猜一个启动文件）。
  */
 export function chooseGroupFor(line, letter, packageLetter, groupsByLine) {
-    const groups = groupsByLine.get(line);
+    // line 在 db 文件名里是原样大小写（L4+ 的 4P5/4Q5/4R5/4S5 带字母），而启动文件名全小写：
+    // 查启动文件档位时统一按小写找，否则 L4+ 会因为 4P5 ≠ 4p5 一颗都算不出来。
+    const groups = groupsByLine.get(line) ?? groupsByLine.get(line.toLowerCase());
     if (groups === undefined) return null;
     const direct = "x" + letter.toLowerCase();
     if (groups.has(direct)) return direct;

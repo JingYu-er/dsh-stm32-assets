@@ -74,6 +74,9 @@ const HEADER_COUNT = 16;
 /** 固件包的许可：CMSIS Device 部分是 Apache-2.0（Copyright ARM Limited - STMicroelectronics，见固件包根 License.md）。 */
 const FIRMWARE_LICENSE = "Apache License 2.0";
 
+/** 没有独立固件包的族 → 它实际借用哪一族的包（目前只有 L4+：L4P5/L4Q5/L4R5/L4S5 都在 STM32Cube_FW_L4 里）。 */
+const FAMILY_FIRMWARE_ALIAS = { "L4+": "L4" };
+
 /** 版本号写在仓库根的 VERSION 里（YYYY.MM.DD-N）：跑脚本不会改它，发布时才手动抬。 */
 const VERSION_PATTERN = /^\d{4}\.\d{2}\.\d{2}-\d+$/u;
 
@@ -226,7 +229,7 @@ function parseArgs(argv) {
         svdPaths: [],
         svdDir: "",
         // F1 以外还要生成哪些族（F1 走上面的专用管线，字节已校准）：按 CPN 的前两位分组（L4 含 L4+）。
-        families: ["C0", "F0", "F2", "F3", "F4", "F7", "G0", "G4", "L0", "L1", "L4", "U0"],
+        families: ["C0", "F0", "F2", "F3", "F4", "F7", "G0", "G4", "H5", "H7", "L0", "L1", "L4", "L4+", "L5", "U0", "U3", "U5", "WBA", "WL"],
         // 每族一份 CubeMX 认证过的最小 .ioc（跑 CubeMX 无头 config load+save 生成，见 docs）。
         familyTemplates: resolve(assetsRoot, "templates/family"),
     };
@@ -730,12 +733,15 @@ async function run(options) {
             skip("族 " + familyId, "没有模板 " + slashed(templateFile) + "（先用 CubeMX 生成一次该族的最小 .ioc）");
             continue;
         }
-        const firmware = findFirmwareRoot(repositoryDir, familyId);
+        // L4+ 没有自己的固件包：L4P5/L4Q5/L4R5/L4S5 这些零件就住在 STM32Cube_FW_L4 里
+        // （CMSIS 目录同样是 STM32L4xx，启动文件 startup_stm32l4p5xx.s 也在那份包里）。
+        const firmwareFamily = FAMILY_FIRMWARE_ALIAS[familyId] ?? familyId;
+        const firmware = findFirmwareRoot(repositoryDir, firmwareFamily);
         if (firmware === null) {
-            skip("族 " + familyId, "CubeMX 的 Repository 里没有 STM32Cube_FW_" + familyId + "_V* 固件包（装了之后重跑）");
+            skip("族 " + familyId, "CubeMX 的 Repository / dsh-firmware 里没有 STM32Cube_FW_" + firmwareFamily + "_V* 固件包（装了之后重跑）");
             continue;
         }
-        const cmsisRoot = join(firmware.dir, "Drivers/CMSIS/Device/ST/STM32" + familyId + "xx");
+        const cmsisRoot = join(firmware.dir, "Drivers/CMSIS/Device/ST/STM32" + firmwareFamily + "xx");
         if (!existsSync(cmsisRoot)) {
             skip("族 " + familyId, "固件包结构不对：缺 " + slashed(cmsisRoot));
             continue;

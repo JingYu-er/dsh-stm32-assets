@@ -1,6 +1,6 @@
 {
   "name": "dsh-stm32-assets",
-  "version": "2026.11.04-1",
+  "version": "2026.11.04-2",
   "schema": 2,
   "generatedBy": "scripts/build-assets.mjs",
   "profiles": {
@@ -19,12 +19,12 @@
     ]
   },
   "profileCounts": {
-    "core": 53,
-    "full": 93
+    "core": 69,
+    "full": 109
   },
   "counts": {
-    "device": 19,
-    "ioc": 26,
+    "device": 27,
+    "ioc": 34,
     "ld": 14,
     "diagrams": 4,
     "svd": 6,
@@ -78,16 +78,30 @@
       {
         "family": "STM32G0",
         "chips": "device/g0/chips.json",
-        "count": 103,
+        "count": 149,
         "ioc": "ioc/family/G0.ioc",
         "package": "STM32Cube_FW_G0_V1.6.2"
       },
       {
         "family": "STM32G4",
         "chips": "device/g4/chips.json",
-        "count": 168,
+        "count": 177,
         "ioc": "ioc/family/G4.ioc",
         "package": "STM32Cube_FW_G4_V1.6.2"
+      },
+      {
+        "family": "STM32H5",
+        "chips": "device/h5/chips.json",
+        "count": 63,
+        "ioc": "ioc/family/H5.ioc",
+        "package": "STM32Cube_FW_H5_V1.5.1"
+      },
+      {
+        "family": "STM32H7",
+        "chips": "device/h7/chips.json",
+        "count": 138,
+        "ioc": "ioc/family/H7.ioc",
+        "package": "STM32Cube_FW_H7_V1.11.0"
       },
       {
         "family": "STM32L0",
@@ -106,9 +120,23 @@
       {
         "family": "STM32L4",
         "chips": "device/l4/chips.json",
-        "count": 145,
+        "count": 151,
         "ioc": "ioc/family/L4.ioc",
         "package": "STM32Cube_FW_L4_V1.18.2"
+      },
+      {
+        "family": "STM32L4+",
+        "chips": "device/l4+/chips.json",
+        "count": 60,
+        "ioc": "ioc/family/L4+.ioc",
+        "package": "STM32Cube_FW_L4_V1.18.2"
+      },
+      {
+        "family": "STM32L5",
+        "chips": "device/l5/chips.json",
+        "count": 15,
+        "ioc": "ioc/family/L5.ioc",
+        "package": "STM32Cube_FW_L5_V1.5.0"
       },
       {
         "family": "STM32U0",
@@ -116,6 +144,34 @@
         "count": 48,
         "ioc": "ioc/family/U0.ioc",
         "package": "STM32Cube_FW_U0_V1.2.0"
+      },
+      {
+        "family": "STM32U3",
+        "chips": "device/u3/chips.json",
+        "count": 21,
+        "ioc": "ioc/family/U3.ioc",
+        "package": "STM32Cube_FW_U3_V1.2.0"
+      },
+      {
+        "family": "STM32U5",
+        "chips": "device/u5/chips.json",
+        "count": 62,
+        "ioc": "ioc/family/U5.ioc",
+        "package": "STM32Cube_FW_U5_V1.8.0"
+      },
+      {
+        "family": "STM32WBA",
+        "chips": "device/wba/chips.json",
+        "count": 35,
+        "ioc": "ioc/family/WBA.ioc",
+        "package": "STM32Cube_FW_WBA_V1.7.0"
+      },
+      {
+        "family": "STM32WL",
+        "chips": "device/wl/chips.json",
+        "count": 12,
+        "ioc": "ioc/family/WL.ioc",
+        "package": "STM32Cube_FW_WL_V1.3.0"
       }
     ],
     "chips": {
@@ -300,127 +356,41 @@
     "STM32F107VBT6：F107 没有 xb 这一容量档（固件包里的档位：xc）",
     "STM32F768AIYx 的容量字母 I：F7 的 line 768 没有匹配的启动文件档位",
     "STM32F778AIYx 的容量字母 I：F7 的 line 778 没有匹配的启动文件档位",
-    "STM32G0B0CETx 的容量字母 E：G0 的 line 0B0 没有匹配的启动文件档位",
-    "STM32G0B0KETx 的容量字母 E：G0 的 line 0B0 没有匹配的启动文件档位",
-    "STM32G0B0RETx 的容量字母 E：G0 的 line 0B0 没有匹配的启动文件档位",
-    "STM32G0B0VETx 的容量字母 E：G0 的 line 0B0 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Tx 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Tx 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Tx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Ux 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Ux 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1C(B-C-E)Ux 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Tx 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Tx 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Tx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Ux 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Ux 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1K(B-C-E)Ux 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1M(B-C-E)Tx 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1M(B-C-E)Tx 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1M(B-C-E)Tx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1NEYx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1R(B-C-E)Tx 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1R(B-C-E)Tx 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1R(B-C-E)Tx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Ix 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Ix 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Ix 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Tx 的容量字母 B：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Tx 的容量字母 C：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0B1V(B-C-E)Tx 的容量字母 E：G0 的 line 0B1 没有匹配的启动文件档位",
-    "STM32G0C1C(C-E)Tx 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1C(C-E)Tx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1C(C-E)Ux 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1C(C-E)Ux 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1K(C-E)Tx 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1K(C-E)Tx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1K(C-E)Ux 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1K(C-E)Ux 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1M(C-E)Tx 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1M(C-E)Tx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1NEYx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1R(C-E)Tx 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1R(C-E)Tx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1V(C-E)Ix 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1V(C-E)Ix 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1V(C-E)Tx 的容量字母 C：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G0C1V(C-E)Tx 的容量字母 E：G0 的 line 0C1 没有匹配的启动文件档位",
-    "STM32G4A1CETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1CEUx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1KEUx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1MESx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1METx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1REIx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1RETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1REYx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32G4A1VETx 的容量字母 E：G4 的 line 4A1 没有匹配的启动文件档位",
-    "STM32L4A6AGIx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4A6QGIx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4A6RGTx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4A6VGTx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4A6VGYx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4A6ZGTx 的容量字母 G：L4 的 line 4A6 没有匹配的启动文件档位",
-    "STM32L4P5A(G-E)Ix 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5A(G-E)Ix 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5C(G-E)Tx 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5C(G-E)Tx 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5C(G-E)Ux 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5C(G-E)Ux 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5Q(G-E)Ix 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5Q(G-E)Ix 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5R(G-E)Tx 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5R(G-E)Tx 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5V(G-E)Tx 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5V(G-E)Tx 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5V(G-E)Yx 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5V(G-E)Yx 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5Z(G-E)Tx 的容量字母 G：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4P5Z(G-E)Tx 的容量字母 E：L4 的 line 4P5 没有匹配的启动文件档位",
-    "STM32L4Q5AGIx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5CGTx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5CGUx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5QGIx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5RGTx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5VGTx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5VGYx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4Q5ZGTx 的容量字母 G：L4 的 line 4Q5 没有匹配的启动文件档位",
-    "STM32L4R5A(G-I)Ix 的容量字母 G：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5A(G-I)Ix 的容量字母 I：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Q(G-I)Ix 的容量字母 G：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Q(G-I)Ix 的容量字母 I：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5V(G-I)Tx 的容量字母 G：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5V(G-I)Tx 的容量字母 I：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Z(G-I)Tx 的容量字母 G：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Z(G-I)Tx 的容量字母 I：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Z(G-I)Yx 的容量字母 G：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R5Z(G-I)Yx 的容量字母 I：L4 的 line 4R5 没有匹配的启动文件档位",
-    "STM32L4R7AIIx 的容量字母 I：L4 的 line 4R7 没有匹配的启动文件档位",
-    "STM32L4R7VITx 的容量字母 I：L4 的 line 4R7 没有匹配的启动文件档位",
-    "STM32L4R7ZITx 的容量字母 I：L4 的 line 4R7 没有匹配的启动文件档位",
-    "STM32L4R9A(G-I)Ix 的容量字母 G：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9A(G-I)Ix 的容量字母 I：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9V(G-I)Tx 的容量字母 G：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9V(G-I)Tx 的容量字母 I：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Jx 的容量字母 G：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Jx 的容量字母 I：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Tx 的容量字母 G：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Tx 的容量字母 I：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Yx 的容量字母 G：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4R9Z(G-I)Yx 的容量字母 I：L4 的 line 4R9 没有匹配的启动文件档位",
-    "STM32L4S5AIIx 的容量字母 I：L4 的 line 4S5 没有匹配的启动文件档位",
-    "STM32L4S5QIIx 的容量字母 I：L4 的 line 4S5 没有匹配的启动文件档位",
-    "STM32L4S5VITx 的容量字母 I：L4 的 line 4S5 没有匹配的启动文件档位",
-    "STM32L4S5ZITx 的容量字母 I：L4 的 line 4S5 没有匹配的启动文件档位",
-    "STM32L4S5ZIYx 的容量字母 I：L4 的 line 4S5 没有匹配的启动文件档位",
-    "STM32L4S7AIIx 的容量字母 I：L4 的 line 4S7 没有匹配的启动文件档位",
-    "STM32L4S7VITx 的容量字母 I：L4 的 line 4S7 没有匹配的启动文件档位",
-    "STM32L4S7ZITx 的容量字母 I：L4 的 line 4S7 没有匹配的启动文件档位",
-    "STM32L4S9AIIx 的容量字母 I：L4 的 line 4S9 没有匹配的启动文件档位",
-    "STM32L4S9VITx 的容量字母 I：L4 的 line 4S9 没有匹配的启动文件档位",
-    "STM32L4S9ZIJx 的容量字母 I：L4 的 line 4S9 没有匹配的启动文件档位",
-    "STM32L4S9ZITx 的容量字母 I：L4 的 line 4S9 没有匹配的启动文件档位",
-    "STM32L4S9ZIYx 的容量字母 I：L4 的 line 4S9 没有匹配的启动文件档位"
+    "STM32H7R3A8Ix 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3I8Kx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3I8Tx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3L8Hx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3R8Vx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3V8Hx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3V8Tx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3V8Yx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3Z8Jx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R3Z8Tx 的容量字母 8：H7 的 line 7R3 没有匹配的启动文件档位",
+    "STM32H7R7A8Ix 的容量字母 8：H7 的 line 7R7 没有匹配的启动文件档位",
+    "STM32H7R7I8Kx 的容量字母 8：H7 的 line 7R7 没有匹配的启动文件档位",
+    "STM32H7R7I8Tx 的容量字母 8：H7 的 line 7R7 没有匹配的启动文件档位",
+    "STM32H7R7L8Hx 的容量字母 8：H7 的 line 7R7 没有匹配的启动文件档位",
+    "STM32H7R7Z8Jx 的容量字母 8：H7 的 line 7R7 没有匹配的启动文件档位",
+    "STM32H7S3A8Ix 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3I8Kx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3I8Tx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3L8Hx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3R8Vx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3V8Hx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3V8Tx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3V8Yx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3Z8Jx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S3Z8Tx 的容量字母 8：H7 的 line 7S3 没有匹配的启动文件档位",
+    "STM32H7S7A8Ix 的容量字母 8：H7 的 line 7S7 没有匹配的启动文件档位",
+    "STM32H7S7I8Kx 的容量字母 8：H7 的 line 7S7 没有匹配的启动文件档位",
+    "STM32H7S7I8Tx 的容量字母 8：H7 的 line 7S7 没有匹配的启动文件档位",
+    "STM32H7S7L8Hx 的容量字母 8：H7 的 line 7S7 没有匹配的启动文件档位",
+    "STM32H7S7Z8Jx 的容量字母 8：H7 的 line 7S7 没有匹配的启动文件档位",
+    "STM32WL54CCU6：固件包里没有启动文件 startup_stm32wl54xx.s",
+    "STM32WL54JCI6：固件包里没有启动文件 startup_stm32wl54xx.s",
+    "STM32WL55CCU6：固件包里没有启动文件 startup_stm32wl55xx.s",
+    "STM32WL55JCI6：固件包里没有启动文件 startup_stm32wl55xx.s",
+    "STM32WL5MOCH6：固件包里没有启动文件 startup_stm32wl5mxx.s"
   ],
   "files": [
     {
@@ -516,16 +486,30 @@
     },
     {
       "path": "device/g0/chips.json",
-      "bytes": 40298,
-      "sha256": "a6c1fe6b42c69d7f6d21d1b0159e39dfa8cd0649c784ef1186e8560bcf82ad1d",
+      "bytes": 57943,
+      "sha256": "71fdff0aca49ec790dd6fcb171317d9960d523bc332e450134ceba0c9451267c",
       "source": "CubeMX db/mcu + STM32Cube_FW_G0_V1.6.2（G0 全部 CPN）",
       "profile": "core"
     },
     {
       "path": "device/g4/chips.json",
-      "bytes": 65299,
-      "sha256": "fa4855101a079b2c3c5f370443da7515cbf868cb396d3decc169625ce17d1d4f",
+      "bytes": 68709,
+      "sha256": "c86020042ad5317c72df8bd5323b9e466810b413444dc480c8b8d8bed396f0bf",
       "source": "CubeMX db/mcu + STM32Cube_FW_G4_V1.6.2（G4 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/h5/chips.json",
+      "bytes": 25079,
+      "sha256": "24edc8df4963b048268ac0d1b35a8ae3226c0acde0efdb58b6798f7cb4eede39",
+      "source": "CubeMX db/mcu + STM32Cube_FW_H5_V1.5.1（H5 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/h7/chips.json",
+      "bytes": 53921,
+      "sha256": "ed1ddc949f091f5ead17ec277b948850d161d7ee972c7ecb4195d8eaccc1f0ce",
+      "source": "CubeMX db/mcu + STM32Cube_FW_H7_V1.11.0（H7 全部 CPN）",
       "profile": "core"
     },
     {
@@ -543,10 +527,24 @@
       "profile": "core"
     },
     {
+      "path": "device/l4+/chips.json",
+      "bytes": 24137,
+      "sha256": "739c72d9f3c88d4e0f73eb4a0ed0a2e503af53ce226bf9265520ac1aed3b47bb",
+      "source": "CubeMX db/mcu + STM32Cube_FW_L4_V1.18.2（L4+ 全部 CPN）",
+      "profile": "core"
+    },
+    {
       "path": "device/l4/chips.json",
-      "bytes": 56485,
-      "sha256": "5476e5c9c2f2a14e5885642a7ee962f28a02a7099cc4b247a6e423b713d3a202",
+      "bytes": 58772,
+      "sha256": "eccf175f50e7cb400c9a0c8d2cc85c7cd33bdc89de049c619c2a94c6f39dd259",
       "source": "CubeMX db/mcu + STM32Cube_FW_L4_V1.18.2（L4 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/l5/chips.json",
+      "bytes": 6836,
+      "sha256": "c7229f89c6112713963a7560757c72ffa3cf2d8ca6f16bd77b9616db555fb8f7",
+      "source": "CubeMX db/mcu + STM32Cube_FW_L5_V1.5.0（L5 全部 CPN）",
       "profile": "core"
     },
     {
@@ -554,6 +552,34 @@
       "bytes": 19239,
       "sha256": "98f2bdffb289c8f5571a700260af27af93731ce381aa35640cda31c3dc131338",
       "source": "CubeMX db/mcu + STM32Cube_FW_U0_V1.2.0（U0 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/u3/chips.json",
+      "bytes": 9092,
+      "sha256": "460cca22cd15c0fd56f47e0c26e7832b8eaadeb9cdf30b8157c73abd12e2b4c3",
+      "source": "CubeMX db/mcu + STM32Cube_FW_U3_V1.2.0（U3 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/u5/chips.json",
+      "bytes": 24718,
+      "sha256": "e71b81d6ad86686686c9a19a46c6c5fbd4285740e8d35d01289b46797d751bf2",
+      "source": "CubeMX db/mcu + STM32Cube_FW_U5_V1.8.0（U5 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/wba/chips.json",
+      "bytes": 14795,
+      "sha256": "61d4283589e48393d610fb93bd188b26642e7480dc8ab1da6f546b232cd18411",
+      "source": "CubeMX db/mcu + STM32Cube_FW_WBA_V1.7.0（WBA 全部 CPN）",
+      "profile": "core"
+    },
+    {
+      "path": "device/wl/chips.json",
+      "bytes": 5660,
+      "sha256": "5320a7fc205ff6ed8e38cfc672ec85b2d50c65362a4fc3d0d58fe0324a0f8fce",
+      "source": "CubeMX db/mcu + STM32Cube_FW_WL_V1.3.0（WL 全部 CPN）",
       "profile": "core"
     },
     {
@@ -753,6 +779,20 @@
       "profile": "core"
     },
     {
+      "path": "ioc/family/H5.ioc",
+      "bytes": 4643,
+      "sha256": "30a6c4c2589ef3717550bcadd05f9cc8ae334a92da26da0cf2d6e02003f869e1",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 H5 最小工程模板（源：templates/family/H5.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/H7.ioc",
+      "bytes": 5521,
+      "sha256": "b2dd3f9ea00fbbb296dd5a9f697370493ac54a93134db844e103c288e2d5c2b6",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 H7 最小工程模板（源：templates/family/H7.ioc）",
+      "profile": "core"
+    },
+    {
       "path": "ioc/family/L0.ioc",
       "bytes": 3174,
       "sha256": "0804f1dc0bc33619e874e7f637d6c3debd534b9bc47c585cf004428e94f069c6",
@@ -767,6 +807,13 @@
       "profile": "core"
     },
     {
+      "path": "ioc/family/L4+.ioc",
+      "bytes": 3639,
+      "sha256": "6affb6592657a74a654e3f9d12dde2889c98f8c3f4123b2d80a627139e01f3b0",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 L4+ 最小工程模板（源：templates/family/L4+.ioc）",
+      "profile": "core"
+    },
+    {
       "path": "ioc/family/L4.ioc",
       "bytes": 3640,
       "sha256": "5047d19d390de95c0e12c90d1c3e8225c1d32c575753aace9ffa65b5a3a332c5",
@@ -774,10 +821,45 @@
       "profile": "core"
     },
     {
+      "path": "ioc/family/L5.ioc",
+      "bytes": 3593,
+      "sha256": "9f7c9c7e5d7b8487453c2257395c086e0024b41561abc169e39b997541f04f6d",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 L5 最小工程模板（源：templates/family/L5.ioc）",
+      "profile": "core"
+    },
+    {
       "path": "ioc/family/U0.ioc",
       "bytes": 3806,
       "sha256": "6e9b56299c3d9b3c10bff356972285f2216cd501d557250166ad13fdb71e8d56",
       "source": "CubeMX 6.15 无头 config load+save 认证过的 U0 最小工程模板（源：templates/family/U0.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/U3.ioc",
+      "bytes": 4403,
+      "sha256": "d6d92182c8b65c0a48fef2af1b18a0e65901ea8c0c78db073d93e4d21ac60350",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 U3 最小工程模板（源：templates/family/U3.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/U5.ioc",
+      "bytes": 4024,
+      "sha256": "21b684ae7a296c2dff439cbb981d5e97756c39b92eca97846c705e3a9cf7fcdc",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 U5 最小工程模板（源：templates/family/U5.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/WBA.ioc",
+      "bytes": 3920,
+      "sha256": "3b9594c0df476aa6a12f4f1458d23e87a8a019c5b79b6ac51e04d0a91d2d3034",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 WBA 最小工程模板（源：templates/family/WBA.ioc）",
+      "profile": "core"
+    },
+    {
+      "path": "ioc/family/WL.ioc",
+      "bytes": 4070,
+      "sha256": "097461f2bfb5721bbd93583150fa65575dfcb44a9edbdb8abcecc0207a5869d8",
+      "source": "CubeMX 6.15 无头 config load+save 认证过的 WL 最小工程模板（源：templates/family/WL.ioc）",
       "profile": "core"
     },
     {
